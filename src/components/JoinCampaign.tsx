@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Sword, Users, Calendar, CheckCircle, XCircle, Loader2 } from 'lucide-react'
+import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import { useInvitationStore } from '@/stores/invitation'
 import { useCampaignStore } from '@/stores/campaign'
 import type { Campaign } from '@/types'
@@ -56,13 +56,15 @@ export const JoinCampaign: React.FC<JoinCampaignProps> = ({
     const result = await joinViaInviteCode(inviteCode.trim())
     
     if (result.success && result.campaign) {
-      setStep('success')
       // Refresh user's campaigns
       await fetchUserCampaigns()
       
-      // Call success callback
+      // Call success callback immediately to close dialog and navigate
       if (onSuccess) {
         onSuccess(result.campaign)
+      } else {
+        // Fallback if no callback provided
+        setStep('success')
       }
     } else {
       setStep('preview')
@@ -135,44 +137,25 @@ export const JoinCampaign: React.FC<JoinCampaignProps> = ({
     return (
       <div className="max-w-md mx-auto">
         <Card className="bg-black/20 backdrop-blur-sm border-purple-500/20">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <Sword className="h-6 w-6 text-purple-400 mr-2" />
-                <CardTitle className="text-white">Join Campaign</CardTitle>
+          <CardHeader className="text-center">
+            <CardTitle className="text-white text-xl">{campaign.name}</CardTitle>
+            {campaign.setting && (
+              <div className="text-sm text-purple-300 mt-1">
+                {campaign.setting}
               </div>
-              <Badge className="bg-green-100 text-green-800">Valid Invitation</Badge>
-            </div>
+            )}
+            {campaign.description && (
+              <CardDescription className="text-purple-200 mt-6">
+                {campaign.description}
+              </CardDescription>
+            )}
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="text-center space-y-2">
-              <h3 className="text-xl font-bold text-white">{campaign.name}</h3>
-              {campaign.setting && (
-                <Badge variant="outline" className="text-purple-300 border-purple-300">
-                  {campaign.setting}
-                </Badge>
-              )}
-              {campaign.description && (
-                <p className="text-purple-200 text-sm">{campaign.description}</p>
-              )}
-            </div>
-
-            <div className="flex items-center justify-center space-x-6 py-4 border-t border-purple-500/20">
-              <div className="text-center">
-                <Users className="h-5 w-5 text-purple-400 mx-auto mb-1" />
-                <p className="text-sm text-purple-200">Join as Player</p>
-              </div>
-              <div className="text-center">
-                <Calendar className="h-5 w-5 text-purple-400 mx-auto mb-1" />
-                <p className="text-sm text-purple-200">Access Sessions</p>
-              </div>
-            </div>
-
-            <div className="space-y-3">
+            <div className="flex gap-3">
               <Button 
                 onClick={handleJoin} 
                 disabled={loading}
-                className="w-full"
+                className="flex-1"
               >
                 {loading ? 'Joining...' : 'Join Campaign'}
               </Button>
@@ -181,7 +164,7 @@ export const JoinCampaign: React.FC<JoinCampaignProps> = ({
                 <Button 
                   variant="outline" 
                   onClick={onCancel}
-                  className="w-full"
+                  className="flex-1"
                 >
                   Cancel
                 </Button>
@@ -197,33 +180,22 @@ export const JoinCampaign: React.FC<JoinCampaignProps> = ({
     <div className="max-w-md mx-auto">
       <Card className="bg-black/20 backdrop-blur-sm border-purple-500/20">
         <CardHeader className="text-center">
-          <div className="flex items-center justify-center mb-4">
-            <Sword className="h-8 w-8 text-purple-400 mr-2" />
-            <CardTitle className="text-white">Join Campaign</CardTitle>
-          </div>
+          <CardTitle className="text-white">Join Campaign</CardTitle>
           <CardDescription className="text-purple-200">
-            Enter your invitation code to join a D&D campaign
+            Enter your invitation code
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="invite-code" className="text-sm font-medium text-purple-200">
-              Invitation Code
-            </label>
-            <Input
-              id="invite-code"
-              type="text"
-              placeholder="ABC123XYZ789"
-              value={inviteCode}
-              onChange={(e) => handleCodeChange(e.target.value)}
-              onKeyPress={handleKeyPress}
-              className="text-center text-lg font-mono tracking-wider"
-              maxLength={12}
-            />
-            <p className="text-xs text-purple-300 text-center">
-              Enter the 12-character code shared by your DM
-            </p>
-          </div>
+          <Input
+            id="invite-code"
+            type="text"
+            placeholder="ABC123XYZ789"
+            value={inviteCode}
+            onChange={(e) => handleCodeChange(e.target.value)}
+            onKeyPress={handleKeyPress}
+            className="text-center text-lg font-mono tracking-wider"
+            maxLength={12}
+          />
 
           {(error || validationResult?.error) && (
             <div className="flex items-center space-x-2 p-3 bg-red-900/20 border border-red-500/20 rounded">
@@ -234,33 +206,24 @@ export const JoinCampaign: React.FC<JoinCampaignProps> = ({
             </div>
           )}
 
-          <div className="space-y-3">
+          <div className="flex gap-3">
             <Button 
               onClick={handleValidate} 
               disabled={!inviteCode.trim() || loading}
-              className="w-full"
+              className="flex-1"
             >
-              {loading ? 'Validating...' : 'Validate Code'}
+              {loading ? 'Checking...' : 'Continue'}
             </Button>
             
             {onCancel && (
               <Button 
                 variant="outline" 
                 onClick={onCancel}
-                className="w-full"
+                className="flex-1"
               >
                 Cancel
               </Button>
             )}
-          </div>
-
-          <div className="text-center pt-4 border-t border-purple-500/20">
-            <p className="text-sm text-purple-300">
-              Don't have an invitation code?{' '}
-              <button className="text-purple-200 hover:underline">
-                Contact your DM
-              </button>
-            </p>
           </div>
         </CardContent>
       </Card>

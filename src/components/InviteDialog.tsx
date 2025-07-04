@@ -20,8 +20,8 @@ const CreateInviteForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const { createInvitation, loading } = useInvitationStore()
   
   const [formData, setFormData] = React.useState({
-    maxUses: '',
-    expiresInDays: ''
+    maxUses: 'unlimited',
+    expiresInDays: 'never'
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,13 +29,13 @@ const CreateInviteForm = ({ onSuccess }: { onSuccess: () => void }) => {
     if (!currentCampaign) return
 
     const options = {
-      maxUses: formData.maxUses ? parseInt(formData.maxUses) : undefined,
-      expiresInDays: formData.expiresInDays ? parseInt(formData.expiresInDays) : undefined
+      maxUses: formData.maxUses && formData.maxUses !== 'unlimited' ? parseInt(formData.maxUses) : undefined,
+      expiresInDays: formData.expiresInDays && formData.expiresInDays !== 'never' ? parseInt(formData.expiresInDays) : undefined
     }
 
     const invitation = await createInvitation(currentCampaign.id, options)
     if (invitation) {
-      setFormData({ maxUses: '', expiresInDays: '' })
+      setFormData({ maxUses: 'unlimited', expiresInDays: 'never' })
       onSuccess()
     }
   }
@@ -63,7 +63,7 @@ const CreateInviteForm = ({ onSuccess }: { onSuccess: () => void }) => {
                   <SelectValue placeholder="Unlimited" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Unlimited</SelectItem>
+                  <SelectItem value="unlimited">Unlimited</SelectItem>
                   <SelectItem value="1">1 use</SelectItem>
                   <SelectItem value="5">5 uses</SelectItem>
                   <SelectItem value="10">10 uses</SelectItem>
@@ -84,7 +84,7 @@ const CreateInviteForm = ({ onSuccess }: { onSuccess: () => void }) => {
                   <SelectValue placeholder="Never" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Never</SelectItem>
+                  <SelectItem value="never">Never</SelectItem>
                   <SelectItem value="1">1 day</SelectItem>
                   <SelectItem value="7">7 days</SelectItem>
                   <SelectItem value="30">30 days</SelectItem>

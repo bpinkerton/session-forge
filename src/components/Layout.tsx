@@ -4,12 +4,14 @@ import { useCampaignStore } from '@/stores/campaign'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { CampaignSetup } from './CampaignSetup'
 import { CampaignManagement } from './CampaignManagement'
 import { SessionList } from './SessionList'
 import { SessionDetail } from './SessionDetail'
 import { SessionDialog } from './SessionDialog'
 import { InviteDialog } from './InviteDialog'
+import { JoinCampaign } from './JoinCampaign'
 import { Sword, Users, Calendar, Map, Trophy, ArrowLeft, UserPlus, Edit } from 'lucide-react'
 import { getDisplayStatus } from '@/constants/campaignStatus'
 import type { Session, Campaign } from '@/types'
@@ -91,16 +93,33 @@ const AuthForm = () => {
 
 const Dashboard = () => {
   const { user, signOut } = useAuthStore()
-  const { currentCampaign, setCurrentCampaign, fetchCampaignFull, userRole } = useCampaignStore()
+  const { currentCampaign, setCurrentCampaign, fetchCampaignFull, fetchUserCampaigns, userRole, validateCurrentCampaignAccess } = useCampaignStore()
   
   const [currentView, setCurrentView] = React.useState<'campaign-setup' | 'campaign-management' | 'home' | 'sessions' | 'characters' | 'campaign' | 'tavern'>('campaign-setup')
   const [selectedSessionId, setSelectedSessionId] = React.useState<string | null>(null)
   const [sessionDialogOpen, setSessionDialogOpen] = React.useState(false)
   const [inviteDialogOpen, setInviteDialogOpen] = React.useState(false)
   const [editingSession, setEditingSession] = React.useState<Session | null>(null)
+  const [joinDialogOpen, setJoinDialogOpen] = React.useState(false)
+  const [inviteCodeFromUrl, setInviteCodeFromUrl] = React.useState<string | null>(null)
 
   // Track campaign ID separately to avoid navigation on property updates
   const [lastCampaignId, setLastCampaignId] = React.useState<string | null>(null)
+
+  // Check for invite URLs on mount
+  React.useEffect(() => {
+    const path = window.location.pathname
+    const joinMatch = path.match(/^\/join\/([A-Z0-9]+)$/i)
+    
+    if (joinMatch && user) {
+      const inviteCode = joinMatch[1].toUpperCase()
+      setInviteCodeFromUrl(inviteCode)
+      setJoinDialogOpen(true)
+      
+      // Clean up the URL without refreshing the page
+      window.history.replaceState({}, '', '/')
+    }
+  }, [user])
 
   React.useEffect(() => {
     const currentCampaignId = currentCampaign?.id || null
@@ -122,14 +141,42 @@ const Dashboard = () => {
     }
   }, [currentCampaign, currentView, lastCampaignId])
 
+  // Validate access when user returns to tab - no alerts, just cleanup
+  React.useEffect(() => {
+    if (!currentCampaign) return
+
+    const handleFocus = async () => {
+      const hasAccess = await validateCurrentCampaignAccess()
+      if (!hasAccess) {
+        // Silently cleanup and redirect to campaign setup
+        setCurrentCampaign(null)
+        await fetchUserCampaigns()
+        setCurrentView('campaign-setup')
+      }
+    }
+
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [currentCampaign?.id, validateCurrentCampaignAccess, fetchUserCampaigns])
+
   const handleCampaignSelected = async (campaign: Campaign) => {
-    await fetchCampaignFull(campaign.id)
-    setCurrentView('home')
+    try {
+      await fetchCampaignFull(campaign.id)
+      setCurrentView('home')
+    } catch (error) {
+      // Silently refresh campaign list to remove inaccessible campaigns
+      await fetchUserCampaigns()
+    }
   }
 
   const handleCampaignManage = async (campaign: Campaign) => {
-    await fetchCampaignFull(campaign.id)
-    setCurrentView('campaign-management')
+    try {
+      await fetchCampaignFull(campaign.id)
+      setCurrentView('campaign-management')
+    } catch (error) {
+      // Silently refresh campaign list to remove inaccessible campaigns
+      await fetchUserCampaigns()
+    }
   }
 
   const handleSessionClick = (session: Session) => {
@@ -152,7 +199,12 @@ const Dashboard = () => {
   }
 
   const handleBackToHome = () => {
-    setCurrentView('home')
+    // If no campaign, redirect to setup instead of home
+    if (!currentCampaign) {
+      setCurrentView('campaign-setup')
+    } else {
+      setCurrentView('home')
+    }
     setSelectedSessionId(null)
   }
 
@@ -183,7 +235,12 @@ const Dashboard = () => {
       )
     }
 
-    // Default home view
+    // Default home view - redirect to setup if no campaign
+    if (!currentCampaign) {
+      setCurrentView('campaign-setup')
+      return <CampaignSetup onCampaignSelected={handleCampaignSelected} onCampaignManage={handleCampaignManage} />
+    }
+    
     return (
       <div className="space-y-8">
         {currentCampaign ? (
@@ -356,6 +413,31 @@ const Dashboard = () => {
         open={inviteDialogOpen}
         onOpenChange={setInviteDialogOpen}
       />
+      
+      <Dialog open={joinDialogOpen} onOpenChange={(open) => {
+        setJoinDialogOpen(open)
+        if (!open) {
+          setInviteCodeFromUrl(null)
+        }
+      }}>
+        <DialogContent className="max-w-lg bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 border-purple-500/20">
+          <JoinCampaign
+            inviteCode={inviteCodeFromUrl || undefined}
+            onSuccess={async (campaign) => {
+              setJoinDialogOpen(false)
+              setInviteCodeFromUrl(null)
+              // Refresh campaigns list first to include the newly joined campaign
+              await fetchUserCampaigns()
+              // Then select and load the full campaign
+              await handleCampaignSelected(campaign)
+            }}
+            onCancel={() => {
+              setJoinDialogOpen(false)
+              setInviteCodeFromUrl(null)
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

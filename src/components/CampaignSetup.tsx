@@ -135,8 +135,9 @@ export const CampaignSetup: React.FC<CampaignSetupProps> = ({ onCampaignSelected
 
 
   React.useEffect(() => {
+    // Always refresh campaigns when this component mounts to ensure removed campaigns are cleared
     fetchUserCampaigns()
-  }, [])
+  }, [fetchUserCampaigns])
 
   const handleCreateSuccess = (campaign: Campaign) => {
     setShowCreateForm(false)

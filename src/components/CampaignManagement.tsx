@@ -16,14 +16,16 @@ interface CampaignManagementProps {
 }
 
 export const CampaignManagement: React.FC<CampaignManagementProps> = ({ onBack }) => {
-  console.log('CampaignManagement render, onBack:', onBack)
-  const { currentCampaign, updateCampaign, userRole, loading, deactivateCampaign } = useCampaignStore()
+  const { currentCampaign, updateCampaign, userRole, loading, deactivateCampaign, removeMember } = useCampaignStore()
   const [inviteDialogOpen, setInviteDialogOpen] = React.useState(false)
   const [editingField, setEditingField] = React.useState<string | null>(null)
   const [tempValue, setTempValue] = React.useState('')
   const [saving, setSaving] = React.useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false)
   const [deleting, setDeleting] = React.useState(false)
+  const [removingMemberId, setRemovingMemberId] = React.useState<string | null>(null)
+  const [showRemoveConfirm, setShowRemoveConfirm] = React.useState(false)
+  const [memberToRemove, setMemberToRemove] = React.useState<{ userId: string, role: string } | null>(null)
 
   // Create a ref to track if we're preventing navigation
   const preventingNavigationRef = React.useRef(false)
@@ -57,15 +59,6 @@ export const CampaignManagement: React.FC<CampaignManagementProps> = ({ onBack }
     onBack()
   }
 
-  // Add global debugging
-  React.useEffect(() => {
-    const originalOnBack = onBack
-    console.log('CampaignManagement mounted, onBack function:', originalOnBack)
-    
-    return () => {
-      console.log('CampaignManagement unmounting')
-    }
-  }, [onBack])
 
   const startEditing = (field: string, currentValue: string) => {
     if (userRole !== 'dm') return
@@ -202,6 +195,27 @@ export const CampaignManagement: React.FC<CampaignManagementProps> = ({ onBack }
     } finally {
       setDeleting(false)
       setShowDeleteConfirm(false)
+    }
+  }
+
+  const handleRemoveMemberClick = (userId: string, role: string) => {
+    setMemberToRemove({ userId, role })
+    setShowRemoveConfirm(true)
+  }
+
+  const handleRemoveMember = async () => {
+    if (!currentCampaign || !memberToRemove) return
+    
+    setRemovingMemberId(memberToRemove.userId)
+    try {
+      await removeMember(currentCampaign.id, memberToRemove.userId)
+      setShowRemoveConfirm(false)
+      setMemberToRemove(null)
+    } catch (error) {
+      console.error('Error removing member:', error)
+      alert('Failed to remove player from campaign')
+    } finally {
+      setRemovingMemberId(null)
     }
   }
 
@@ -470,7 +484,13 @@ export const CampaignManagement: React.FC<CampaignManagementProps> = ({ onBack }
                         </Badge>
                       </div>
                       {userRole === 'dm' && member.role !== 'dm' && (
-                        <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleRemoveMemberClick(member.user_id, member.role)}
+                          disabled={removingMemberId === member.user_id}
+                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       )}
@@ -525,6 +545,47 @@ export const CampaignManagement: React.FC<CampaignManagementProps> = ({ onBack }
                   disabled={deleting}
                 >
                   {deleting ? 'Deactivating...' : 'Deactivate Campaign'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Remove Member Confirmation Dialog */}
+      {showRemoveConfirm && memberToRemove && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md mx-4">
+            <CardHeader>
+              <CardTitle className="text-red-600 flex items-center">
+                <Trash2 className="h-5 w-5 mr-2" />
+                Remove Player
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p>
+                Are you sure you want to remove this <strong>{memberToRemove.role}</strong> from the campaign?
+              </p>
+              <p className="text-sm text-gray-600">
+                This will remove their access to the campaign. They can be re-invited if needed.
+              </p>
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowRemoveConfirm(false)
+                    setMemberToRemove(null)
+                  }}
+                  disabled={removingMemberId === memberToRemove.userId}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleRemoveMember}
+                  disabled={removingMemberId === memberToRemove.userId}
+                >
+                  {removingMemberId === memberToRemove.userId ? 'Removing...' : 'Remove Player'}
                 </Button>
               </div>
             </CardContent>

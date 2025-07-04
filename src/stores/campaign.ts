@@ -48,16 +48,37 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('No authenticated user')
 
-      // Fetch active campaigns where user is the DM
-      const { data: campaigns, error } = await supabase
+      // Get campaigns where user is DM
+      const { data: dmCampaigns, error: dmError } = await supabase
         .from('campaigns')
         .select('*')
         .eq('dm_user_id', user.id)
         .eq('is_active', true)
-        .order('created_at', { ascending: false })
 
-      if (error) throw error
-      set({ campaigns: campaigns || [], loading: false })
+      if (dmError) throw dmError
+
+      // Get campaigns where user is a member (with fresh check)
+      const { data: memberCampaigns, error: memberError } = await supabase
+        .from('campaign_members')
+        .select(`
+          campaign_id,
+          campaigns!inner(*)
+        `)
+        .eq('user_id', user.id)
+        .eq('campaigns.is_active', true)
+
+      if (memberError) throw memberError
+
+      // Extract campaign data from member relationships
+      const memberCampaignData = memberCampaigns?.map(m => m.campaigns).filter(Boolean) || []
+
+      // Combine and deduplicate
+      const allCampaigns = [...(dmCampaigns || []), ...memberCampaignData]
+      const uniqueCampaigns = allCampaigns.filter((campaign, index, self) => 
+        index === self.findIndex(c => c.id === campaign.id)
+      )
+
+      set({ campaigns: uniqueCampaigns, loading: false })
     } catch (error) {
       set({ error: (error as Error).message, loading: false })
     }
@@ -390,7 +411,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('No authenticated user')
 
-      // Fetch campaign with members and characters
+      // Fetch campaign with members and characters (force fresh data with timestamp)
       const { data: campaign, error: campaignError } = await supabase
         .from('campaigns')
         .select(`
@@ -402,6 +423,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
           )
         `)
         .eq('id', campaignId)
+        .eq('is_active', true)
         .single()
 
       if (campaignError) throw campaignError
@@ -416,6 +438,17 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
         // Check if user is a member
         const userMember = campaign.members?.find(member => member.user_id === user.id)
         userRole = userMember?.role || null
+      }
+
+      // If user has no role in this campaign, they've been removed or don't have access
+      if (userRole === null) {
+        set({
+          currentCampaign: null,
+          userRole: null,
+          loading: false,
+          error: 'You no longer have access to this campaign'
+        })
+        throw new Error('You no longer have access to this campaign')
       }
 
       set({
@@ -445,6 +478,40 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
 
   clearError: () => {
     set({ error: null })
+  },
+
+  // Check if user still has access to current campaign
+  validateCurrentCampaignAccess: async () => {
+    const { currentCampaign } = get()
+    if (!currentCampaign) return true
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return false
+
+      // Check if user is still DM or member of this campaign
+      const { data: campaign, error } = await supabase
+        .from('campaigns')
+        .select(`
+          id,
+          dm_user_id,
+          members:campaign_members!inner(user_id)
+        `)
+        .eq('id', currentCampaign.id)
+        .eq('is_active', true)
+        .single()
+
+      if (error) return false
+
+      // Check if user is DM
+      if (campaign.dm_user_id === user.id) return true
+
+      // Check if user is a member
+      const isMember = campaign.members?.some(member => member.user_id === user.id)
+      return isMember || false
+    } catch (error) {
+      return false
+    }
   }
 }))
 
