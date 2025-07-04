@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
-import type { Campaign, CampaignMember, CampaignFull, Character, CampaignCharacter } from '@/types'
+import type { Campaign, CampaignFull, CampaignCharacter } from '@/types'
 
 interface CampaignState {
   campaigns: Campaign[]
@@ -31,6 +31,7 @@ interface CampaignState {
   setCurrentCampaign: (campaign: CampaignFull | null) => void
   fetchCampaignFull: (campaignId: string) => Promise<void>
   getUserRoleInCampaign: (campaignId: string) => 'dm' | 'player' | 'observer' | null
+  validateCurrentCampaignAccess: () => Promise<boolean>
   clearError: () => void
 }
 
@@ -70,7 +71,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
       if (memberError) throw memberError
 
       // Extract campaign data from member relationships
-      const memberCampaignData = memberCampaigns?.map(m => m.campaigns).filter(Boolean) || []
+      const memberCampaignData = memberCampaigns?.map((m: any) => m.campaigns).filter(Boolean) || []
 
       // Combine and deduplicate
       const allCampaigns = [...(dmCampaigns || []), ...memberCampaignData]
@@ -436,7 +437,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
         userRole = 'dm'
       } else {
         // Check if user is a member
-        const userMember = campaign.members?.find(member => member.user_id === user.id)
+        const userMember = campaign.members?.find((member: any) => member.user_id === user.id)
         userRole = userMember?.role || null
       }
 
@@ -462,14 +463,10 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
   },
 
   getUserRoleInCampaign: (campaignId: string) => {
-    const { currentCampaign } = get()
+    const { currentCampaign, userRole } = get()
     if (!currentCampaign || currentCampaign.id !== campaignId) return null
     
-    const userMember = currentCampaign.members.find(
-      member => member.user_id === supabase.auth.getUser().then(u => u.data.user?.id)
-    )
-    
-    return userMember?.role || null
+    return userRole
   },
 
   setCurrentCampaign: (campaign: CampaignFull | null) => {
@@ -507,7 +504,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
       if (campaign.dm_user_id === user.id) return true
 
       // Check if user is a member
-      const isMember = campaign.members?.some(member => member.user_id === user.id)
+      const isMember = campaign.members?.some((member: any) => member.user_id === user.id)
       return isMember || false
     } catch (error) {
       return false

@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Users, Settings, UserPlus, Trash2, Edit } from 'lucide-react'
+import { ArrowLeft, Users, UserPlus, Trash2, Edit } from 'lucide-react'
 import { useCampaignStore } from '@/stores/campaign'
 import { InviteDialog } from './InviteDialog'
 import { getDisplayStatus, CAMPAIGN_STATUS_OPTIONS } from '@/constants/campaignStatus'
@@ -16,7 +16,7 @@ interface CampaignManagementProps {
 }
 
 export const CampaignManagement: React.FC<CampaignManagementProps> = ({ onBack }) => {
-  const { currentCampaign, updateCampaign, userRole, loading, deactivateCampaign, removeMember } = useCampaignStore()
+  const { currentCampaign, updateCampaign, userRole, deactivateCampaign, removeMember } = useCampaignStore()
   const [inviteDialogOpen, setInviteDialogOpen] = React.useState(false)
   const [editingField, setEditingField] = React.useState<string | null>(null)
   const [tempValue, setTempValue] = React.useState('')

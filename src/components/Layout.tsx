@@ -12,7 +12,7 @@ import { SessionDetail } from './SessionDetail'
 import { SessionDialog } from './SessionDialog'
 import { InviteDialog } from './InviteDialog'
 import { JoinCampaign } from './JoinCampaign'
-import { Sword, Users, Calendar, Map, Trophy, ArrowLeft, UserPlus, Edit } from 'lucide-react'
+import { Sword, Users, Calendar, Map, Trophy, UserPlus, Edit } from 'lucide-react'
 import { getDisplayStatus } from '@/constants/campaignStatus'
 import type { Session, Campaign } from '@/types'
 
