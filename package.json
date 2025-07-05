@@ -39,6 +39,7 @@
     "@vitejs/plugin-react": "^4.5.2",
     "@vitest/coverage-v8": "^1.2.2",
     "@vitest/ui": "^1.2.2",
+    "audit-ci": "^7.1.0",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.29.0",
     "eslint-plugin-react-hooks": "^5.2.0",
