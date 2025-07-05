@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tooltip } from '@/components/ui/tooltip'
 import { Plus, Sword, Users, UserPlus, Calendar, Trophy, Settings } from 'lucide-react'
 import { useCampaignStore } from '@/stores/campaign'
 import { useAuthStore } from '@/stores/auth'
@@ -89,24 +89,6 @@ const CreateCampaignForm = ({ onCancel, onSuccess }: { onCancel: () => void, onS
             />
           </div>
 
-          <div className="space-y-2">
-            <label htmlFor="status" className="text-sm font-medium">
-              Status
-            </label>
-            <Select
-              value={formData.status}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as Campaign['status'] }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="planning">Planning</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="on_hold">On Hold</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
 
           <div className="flex justify-end space-x-2 pt-4">
             <Button
@@ -253,9 +235,11 @@ export const CampaignSetup: React.FC<CampaignSetupProps> = ({ onCampaignSelected
                       <div className="flex-1">
                         <CardTitle className="text-white mb-1">{campaign.name}</CardTitle>
                         <div className="mb-2">
-                          <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${getDisplayStatus(campaign.status).color}`}>
-                            {getDisplayStatus(campaign.status).label}
-                          </span>
+                          <Tooltip content={getDisplayStatus(campaign.status).description}>
+                            <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${getDisplayStatus(campaign.status).color}`}>
+                              {getDisplayStatus(campaign.status).label}
+                            </span>
+                          </Tooltip>
                         </div>
                         {campaign.setting && (
                           <CardDescription className="text-purple-300">

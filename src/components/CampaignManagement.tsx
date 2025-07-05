@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
+import { Tooltip } from '@/components/ui/tooltip'
 import { ArrowLeft, Users, UserPlus, Trash2, Edit } from 'lucide-react'
 import { useCampaignStore } from '@/stores/campaign'
 import { InviteDialog } from './InviteDialog'
@@ -284,7 +285,7 @@ export const CampaignManagement: React.FC<CampaignManagementProps> = ({ onBack }
           } p-2 rounded border border-transparent transition-colors`}
           onClick={() => {
             console.log(`Clicked field: ${field}, canEdit: ${canEdit}`)
-            canEdit && startEditing(field, value)
+            if (canEdit) startEditing(field, value)
           }}
         >
           <div className="flex items-center justify-between">
@@ -395,20 +396,23 @@ export const CampaignManagement: React.FC<CampaignManagementProps> = ({ onBack }
                       >
                         <SelectTrigger className="bg-transparent border-none h-auto p-0 hover:bg-transparent focus:ring-0 focus:ring-offset-0 text-left justify-start w-fit">
                           <SelectValue asChild>
-                            <span className={`inline-flex px-3 py-1 rounded text-sm font-medium cursor-pointer hover:opacity-80 transition-opacity ${getDisplayStatus(currentCampaign.status).color}`}>
-                              {getDisplayStatus(currentCampaign.status).label}
-                            </span>
+                            <Tooltip content={getDisplayStatus(currentCampaign.status).description}>
+                              <span className={`inline-flex px-3 py-1 rounded text-sm font-medium cursor-pointer hover:opacity-80 transition-opacity ${getDisplayStatus(currentCampaign.status).color}`}>
+                                {getDisplayStatus(currentCampaign.status).label}
+                              </span>
+                            </Tooltip>
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent className="bg-black/20 backdrop-blur-sm border-purple-500/20 text-white min-w-[140px]">
                           {CAMPAIGN_STATUS_OPTIONS.map((option) => (
-                            <SelectItem 
-                              key={option.value}
-                              value={option.value} 
-                              className="focus:bg-purple-900/30 focus:text-white cursor-pointer"
-                            >
-                              {option.label}
-                            </SelectItem>
+                            <Tooltip key={option.value} content={option.description}>
+                              <SelectItem 
+                                value={option.value} 
+                                className="focus:bg-purple-900/30 focus:text-white cursor-pointer"
+                              >
+                                {option.label}
+                              </SelectItem>
+                            </Tooltip>
                           ))}
                         </SelectContent>
                       </Select>
