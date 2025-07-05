@@ -13,7 +13,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 console.log('Supabase config:', { 
   url: supabaseUrl,
-  keyPrefix: supabaseAnonKey?.slice(0, 20) + '...'
+  keyPrefix: supabaseAnonKey?.slice(0, 20) + '...',
+  fullKey: supabaseAnonKey // Temporarily show full key for debugging
 })
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
