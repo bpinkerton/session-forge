@@ -10,6 +10,10 @@ interface AuthState {
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
   updatePassword: (password: string) => Promise<void>
+  signInWithGoogle: () => Promise<void>
+  signInWithApple: () => Promise<void>
+  signInWithDiscord: () => Promise<void>
+  signInWithTwitch: () => Promise<void>
   initialize: () => Promise<void>
 }
 
@@ -48,6 +52,46 @@ export const useAuthStore = create<AuthState>((set) => ({
   updatePassword: async (password: string) => {
     const { error } = await supabase.auth.updateUser({
       password: password
+    })
+    if (error) throw error
+  },
+
+  signInWithGoogle: async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '?oauth_return=accounts&provider=google',
+      }
+    })
+    if (error) throw error
+  },
+
+  signInWithApple: async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'apple',
+      options: {
+        redirectTo: window.location.origin,
+      }
+    })
+    if (error) throw error
+  },
+
+  signInWithDiscord: async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'discord',
+      options: {
+        redirectTo: window.location.origin + '?oauth_return=accounts&provider=discord',
+      }
+    })
+    if (error) throw error
+  },
+
+  signInWithTwitch: async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'twitch',
+      options: {
+        redirectTo: window.location.origin + '?oauth_return=accounts&provider=twitch',
+      }
     })
     if (error) throw error
   },

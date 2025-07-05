@@ -93,7 +93,7 @@ export const SessionDetail: React.FC<SessionDetailProps> = ({ sessionId, onEdit,
 
   if (!session) {
     return (
-      <Card className="bg-black/20 backdrop-blur-sm border-purple-500/20">
+      <Card className="bg-app-card">
         <CardContent className="p-8 text-center">
           <p className="text-purple-200">Session not found</p>
           <Button onClick={onBack} className="mt-4">
@@ -124,7 +124,7 @@ export const SessionDetail: React.FC<SessionDetailProps> = ({ sessionId, onEdit,
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Session Info */}
-        <Card className="bg-black/20 backdrop-blur-sm border-purple-500/20">
+        <Card className="bg-app-card">
           <CardHeader>
             <CardTitle className="text-white">Session Details</CardTitle>
           </CardHeader>
@@ -155,7 +155,7 @@ export const SessionDetail: React.FC<SessionDetailProps> = ({ sessionId, onEdit,
         </Card>
 
         {/* Date Polling */}
-        <Card className="bg-black/20 backdrop-blur-sm border-purple-500/20">
+        <Card className="bg-app-card">
           <CardHeader>
             <CardTitle className="text-white">Date Polling</CardTitle>
             <CardDescription className="text-purple-200">
@@ -226,7 +226,7 @@ export const SessionDetail: React.FC<SessionDetailProps> = ({ sessionId, onEdit,
       </div>
 
       {/* Session Notes */}
-      <Card className="bg-black/20 backdrop-blur-sm border-purple-500/20">
+      <Card className="bg-app-card">
         <CardHeader>
           <CardTitle className="text-white">Session Notes</CardTitle>
         </CardHeader>

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
+import { requireAuth } from '@/utils/getCurrentUser'
 import type { CampaignInvitation, InvitationUse, Campaign } from '@/types'
 
 interface InvitationState {
@@ -54,8 +55,7 @@ export const useInvitationStore = create<InvitationState>((set) => ({
   createInvitation: async (campaignId: string, options = {}) => {
     set({ loading: true, error: null })
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('No authenticated user')
+      const user = requireAuth()
 
       // Generate expiration date if specified
       const expiresAt = options.expiresInDays 
@@ -180,8 +180,7 @@ export const useInvitationStore = create<InvitationState>((set) => ({
   joinViaInviteCode: async (code: string) => {
     set({ loading: true, error: null })
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('No authenticated user')
+      const user = requireAuth()
 
       // Use the database function to handle the join process
       const { data, error } = await supabase
