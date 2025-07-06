@@ -43,7 +43,14 @@ const customRender = (
   options?: Omit<RenderOptions, 'wrapper'>
 ) => render(ui, { wrapper: AllTheProviders, ...options })
 
-export * from '@testing-library/react'
+// Re-export specific testing utilities
+export { 
+  screen, 
+  waitFor, 
+  fireEvent, 
+  within,
+  act
+} from '@testing-library/react'
 export { customRender as render }
 export { mockSupabaseClient }
 
