@@ -31,8 +31,9 @@ export const EnvironmentBadge: React.FC = () => {
         setEnvironment({ type: 'preview', branch: 'preview' })
       }
     } else {
-      // Main project URL without branch = production
-      setEnvironment({ type: 'production' })
+      // Current main project URL = staging (until production Supabase account setup)
+      // TODO: Update this logic when production environment is configured
+      setEnvironment({ type: 'staging' })
     }
   }, [])
 
