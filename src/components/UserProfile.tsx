@@ -569,22 +569,22 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
                           <>
                             {connectedAccount?.provider_avatar_url && (
                               <Button 
-                                variant="outline" 
+                                variant="ghost" 
                                 size="sm"
                                 onClick={() => handleOAuthAvatarSelect(provider)}
                                 disabled={saving}
-                                className="text-purple-400 hover:text-purple-300 w-full sm:w-auto"
+                                className="text-purple-400 hover:text-purple-100 hover:bg-purple-500/20 border border-purple-500/30 bg-black/20 w-full sm:w-auto"
                               >
                                 <ExternalLink className="h-3 w-3 mr-1" />
                                 Use Avatar
                               </Button>
                             )}
                             <Button 
-                              variant="outline" 
+                              variant="ghost" 
                               size="sm"
                               onClick={() => handleDisconnectClick(provider)}
                               disabled={saving}
-                              className="text-red-400 hover:text-red-300 w-full sm:w-auto"
+                              className="text-red-400 hover:text-red-100 hover:bg-red-500/20 border border-red-500/30 bg-black/20 w-full sm:w-auto"
                             >
                               <Unlink className="h-3 w-3 mr-1" />
                               Disconnect
@@ -592,14 +592,14 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
                           </>
                         ) : (
                           <Button 
-                            variant="outline" 
+                            variant="ghost" 
                             size="sm"
                             onClick={() => {
                               setHasDisconnected(false) // Reset flag when manually connecting
                               providerInfo.signIn()
                             }}
                             disabled={saving}
-                            className="text-purple-400 hover:text-purple-300 w-full sm:w-auto"
+                            className="text-purple-400 hover:text-purple-100 hover:bg-purple-500/20 border border-purple-500/30 bg-black/20 w-full sm:w-auto"
                           >
                             <Link className="h-3 w-3 mr-1" />
                             Connect
