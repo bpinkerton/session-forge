@@ -1,8 +1,10 @@
 name: CI/CD Pipeline
 
+# CI runs on feature branch pushes and pull requests to main/develop
+# Direct pushes to main/develop are prevented by branch protection rules
 on:
   push:
-    branches: [ main, develop, 'feature/*' ]
+    branches: [ 'feature/*' ]
   pull_request:
     branches: [ main, develop ]
 
@@ -83,53 +85,8 @@ jobs:
         path: dist/
         retention-days: 30
 
-  deploy-staging:
-    name: Deploy to Staging
-    runs-on: ubuntu-latest
-    needs: [test, build]
-    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
-    environment: staging
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: build-files
-        path: dist/
-        
-    - name: Deploy to Staging
-      run: |
-        echo "🚀 Deploying to staging environment..."
-        echo "This would deploy to your staging environment"
-        # Add your staging deployment commands here
-        # Example: Deploy to your hosting provider
-        
-  deploy-production:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    needs: [test, build]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    environment: production
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: build-files
-        path: dist/
-        
-    - name: Deploy to Production
-      run: |
-        echo "🚀 Deploying to production environment..."
-        echo "This would deploy to your production environment"
-        # Add your production deployment commands here
-        # Example: Deploy to your hosting provider
+# Note: Deployment jobs removed - deployments should only happen through
+# pull request merges with proper branch protection rules, not direct pushes
 
   security-scan:
     name: Security Scan
