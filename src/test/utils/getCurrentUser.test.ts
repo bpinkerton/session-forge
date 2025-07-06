@@ -1,6 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { getCurrentUser } from '@/utils/getCurrentUser'
-import { useAuthStore } from '@/stores/auth'
+
+// Mock Supabase first to avoid environment variable issues
+vi.mock('@/lib/supabase', () => ({
+  supabase: {
+    auth: {
+      getUser: vi.fn(() => Promise.resolve({ data: { user: null }, error: null }))
+    }
+  }
+}))
 
 // Mock the auth store
 vi.mock('@/stores/auth', () => ({
@@ -8,6 +15,9 @@ vi.mock('@/stores/auth', () => ({
     getState: vi.fn()
   }
 }))
+
+import { getCurrentUser } from '@/utils/getCurrentUser'
+import { useAuthStore } from '@/stores/auth'
 
 describe('getCurrentUser', () => {
   beforeEach(() => {
