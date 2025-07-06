@@ -87,7 +87,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
         if (memberError) throw memberError
 
         // Extract campaigns from membership data
-        const memberCampaigns = membershipData?.map((m: { campaigns: Campaign }) => m.campaigns).filter(Boolean) || []
+        const memberCampaigns = membershipData?.map((m: unknown) => (m as { campaign_id: string; campaigns: Campaign }).campaigns).filter((campaign): campaign is Campaign => Boolean(campaign)) || []
 
         // Combine and deduplicate
         const allCampaigns = [...(dmCampaigns || []), ...memberCampaigns]

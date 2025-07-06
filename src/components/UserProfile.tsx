@@ -249,7 +249,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
 
   const handleDisconnectConfirm = () => {
     if (disconnectConfirm) {
-      disconnectAccount(disconnectConfirm)
+      disconnectAccount(disconnectConfirm as 'google' | 'discord' | 'twitch')
       setDisconnectConfirm(null)
       setHasDisconnected(true) // Prevent auto-linking after manual disconnection
     }
@@ -545,7 +545,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
                   return (
                     <div key={provider} className="flex items-center justify-between p-3 bg-black/20 rounded-lg border border-purple-500/20">
                       <div className="flex items-center space-x-3">
-                        {renderProviderIcon(provider, isConnected, connectedAccount?.provider_avatar_url)}
+                        {renderProviderIcon(provider, isConnected, connectedAccount?.provider_avatar_url || undefined)}
                         <div>
                           <p className="text-white text-sm font-medium">{providerInfo.name}</p>
                           {isConnected ? (

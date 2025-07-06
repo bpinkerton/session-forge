@@ -29,13 +29,25 @@ describe('getCurrentUser', () => {
       id: 'test-user-id',
       email: 'test@example.com',
       created_at: '2024-01-01T00:00:00Z',
-      updated_at: '2024-01-01T00:00:00Z'
+      updated_at: '2024-01-01T00:00:00Z',
+      app_metadata: {},
+      user_metadata: {},
+      aud: 'authenticated'
     }
 
     vi.mocked(useAuthStore.getState).mockReturnValue({
       user: mockUser,
-      isLoading: false,
-      error: null
+      loading: false,
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn(),
+      resetPassword: vi.fn(),
+      updatePassword: vi.fn(),
+      signInWithGoogle: vi.fn(),
+      signInWithApple: vi.fn(),
+      signInWithDiscord: vi.fn(),
+      signInWithTwitch: vi.fn(),
+      initialize: vi.fn()
     })
 
     const result = getCurrentUser()
@@ -45,8 +57,17 @@ describe('getCurrentUser', () => {
   it('should return null when not authenticated', () => {
     vi.mocked(useAuthStore.getState).mockReturnValue({
       user: null,
-      isLoading: false,
-      error: null
+      loading: false,
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn(),
+      resetPassword: vi.fn(),
+      updatePassword: vi.fn(),
+      signInWithGoogle: vi.fn(),
+      signInWithApple: vi.fn(),
+      signInWithDiscord: vi.fn(),
+      signInWithTwitch: vi.fn(),
+      initialize: vi.fn()
     })
 
     const result = getCurrentUser()
@@ -55,9 +76,18 @@ describe('getCurrentUser', () => {
 
   it('should return null when user is undefined', () => {
     vi.mocked(useAuthStore.getState).mockReturnValue({
-      user: undefined,
-      isLoading: false,
-      error: null
+      user: null,
+      loading: false,
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn(),
+      resetPassword: vi.fn(),
+      updatePassword: vi.fn(),
+      signInWithGoogle: vi.fn(),
+      signInWithApple: vi.fn(),
+      signInWithDiscord: vi.fn(),
+      signInWithTwitch: vi.fn(),
+      initialize: vi.fn()
     })
 
     const result = getCurrentUser()
