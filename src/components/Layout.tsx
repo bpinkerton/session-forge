@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
-import { Dropdown, DropdownItem, DropdownSeparator } from '@/components/ui/dropdown'
+import { RobustDropdown, RobustDropdownItem, RobustDropdownSeparator } from '@/components/ui/robust-dropdown'
 import { CampaignSetup } from './CampaignSetup'
 import { CampaignManagement } from './CampaignManagement'
 import { SessionList } from './SessionList'
@@ -605,6 +605,7 @@ const Dashboard = () => {
   const [inviteCodeFromUrl, setInviteCodeFromUrl] = React.useState<string | null>(null)
   const [signingOut, setSigningOut] = React.useState(false)
   const [profileDropdownOpen, setProfileDropdownOpen] = React.useState(false)
+  const [campaignDropdownOpen, setCampaignDropdownOpen] = React.useState(false)
 
   // Track campaign ID separately to avoid navigation on property updates
   const [lastCampaignId, setLastCampaignId] = React.useState<string | null>(null)
@@ -703,6 +704,25 @@ const Dashboard = () => {
     return () => window.removeEventListener('focus', handleFocus)
   }, [currentCampaign?.id, validateCurrentCampaignAccess, fetchUserCampaigns])
 
+  // Close dropdowns when the other one opens (mutual exclusion)
+  React.useEffect(() => {
+    if (profileDropdownOpen && campaignDropdownOpen) {
+      setCampaignDropdownOpen(false)
+    }
+  }, [profileDropdownOpen, campaignDropdownOpen])
+
+  React.useEffect(() => {
+    if (campaignDropdownOpen && profileDropdownOpen) {
+      setProfileDropdownOpen(false)
+    }
+  }, [campaignDropdownOpen, profileDropdownOpen])
+
+  // Close dropdowns on navigation
+  React.useEffect(() => {
+    setProfileDropdownOpen(false)
+    setCampaignDropdownOpen(false)
+  }, [currentView])
+
   const handleCampaignSelected = async (campaign: Campaign) => {
     try {
       await fetchCampaignFull(campaign.id)
@@ -796,9 +816,9 @@ const Dashboard = () => {
             className="mb-8 p-6 bg-black/20 backdrop-blur-sm border border-purple-500/20 rounded-lg hover:border-purple-400/30 transition-colors cursor-pointer group"
             onClick={() => setCurrentView('campaign-management')}
           >
-            <div className="flex items-center gap-3 mb-2">
-              <h2 className="text-3xl font-bold text-white group-hover:text-purple-100 transition-colors">{currentCampaign.name}</h2>
-              <span className={`px-2 py-1 rounded text-sm font-medium self-start mt-1 ${getDisplayStatus(currentCampaign.status).color}`}>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white group-hover:text-purple-100 transition-colors">{currentCampaign.name}</h2>
+              <span className={`px-2 py-1 rounded text-sm font-medium self-start ${getDisplayStatus(currentCampaign.status).color}`}>
                 {getDisplayStatus(currentCampaign.status).label}
               </span>
             </div>
@@ -815,12 +835,12 @@ const Dashboard = () => {
           </div>
         ) : (
           <div className="mb-8">
-            <h2 className="text-3xl font-bold text-white mb-2">SessionForge</h2>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-2">SessionForge</h2>
             <p className="text-purple-200">Your D&D campaign management portal</p>
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           <Card className="bg-app-card hover:border-purple-400/30 transition-colors cursor-pointer">
             <CardHeader>
               <CardTitle className="flex items-center text-white">
@@ -902,47 +922,73 @@ const Dashboard = () => {
       <nav className="bg-black/20 backdrop-blur-sm border-b border-purple-500/20 relative z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
+            {/* Left side - Logo + SessionForge + Campaign */}
+            <div className="flex items-center space-x-4 min-w-0 flex-1">
               <button 
                 onClick={handleBackToHome}
-                className="flex items-center hover:opacity-80 transition-opacity"
+                className="flex items-center hover:opacity-80 transition-opacity flex-shrink-0"
               >
-                <Sword className="h-8 w-8 text-purple-400 mr-2" />
-                <h1 className="text-xl font-bold text-white">SessionForge</h1>
+                <Sword className="h-8 w-8 text-purple-400 mr-0 sm:mr-2" />
+                <h1 className="text-xl font-bold text-white hidden sm:block">SessionForge</h1>
               </button>
               
+              {/* Campaign dropdown - shown when campaign is selected */}
               {currentCampaign && currentView !== 'campaign-setup' && (
-                <div className="flex items-center space-x-2">
-                  <span className="text-purple-300">|</span>
-                  <span className="text-purple-200 font-medium">{currentCampaign.name}</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setCurrentView('campaign-setup')}
-                    className="text-purple-300 hover:text-purple-100"
+                <>
+                  <span className="text-purple-300 flex-shrink-0">|</span>
+                  <RobustDropdown
+                    isOpen={campaignDropdownOpen}
+                    onOpenChange={setCampaignDropdownOpen}
+                    align="left"
+                    dataAttribute="campaign-dropdown"
+                    trigger={
+                      <button
+                        onClick={() => setCampaignDropdownOpen(!campaignDropdownOpen)}
+                        data-campaign-dropdown
+                        className="flex items-center space-x-1 px-2 py-1 rounded-lg hover:bg-purple-500/20 transition-colors min-w-0"
+                      >
+                        <span className="text-purple-200 font-medium truncate max-w-[200px] sm:max-w-none" title={currentCampaign.name}>{currentCampaign.name}</span>
+                        <ChevronDown className={`h-3 w-3 text-purple-300 transition-transform flex-shrink-0 ${campaignDropdownOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                    }
                   >
-                    Switch Campaign
-                  </Button>
-                  {userRole === 'dm' && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setInviteDialogOpen(true)}
-                      className="text-purple-300 hover:text-purple-100"
+                    <RobustDropdownItem
+                      onClick={() => {
+                        setCurrentView('campaign-setup')
+                        setCampaignDropdownOpen(false)
+                      }}
                     >
-                      <UserPlus className="h-4 w-4 mr-1" />
-                      Invite Players
-                    </Button>
-                  )}
-                </div>
+                      <Users className="h-4 w-4 mr-3" />
+                      Switch Campaign
+                    </RobustDropdownItem>
+                    
+                    {userRole === 'dm' && (
+                      <RobustDropdownItem
+                        onClick={() => {
+                          setInviteDialogOpen(true)
+                          setCampaignDropdownOpen(false)
+                        }}
+                      >
+                        <UserPlus className="h-4 w-4 mr-3" />
+                        Invite Players
+                      </RobustDropdownItem>
+                    )}
+                  </RobustDropdown>
+                </>
               )}
             </div>
-            <Dropdown
+
+            {/* Right side - Profile dropdown */}
+            <div className="flex items-center flex-shrink-0">
+              {/* Profile dropdown - shown on all screen sizes */}
+              <RobustDropdown
               isOpen={profileDropdownOpen}
-              onClose={() => setProfileDropdownOpen(false)}
+              onOpenChange={setProfileDropdownOpen}
+              dataAttribute="profile-dropdown"
               trigger={
                 <button
                   onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                  data-profile-dropdown
                   className="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-purple-500/20 transition-colors"
                 >
                   <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center overflow-hidden">
@@ -956,15 +1002,14 @@ const Dashboard = () => {
                       <User className="h-4 w-4 text-white" />
                     )}
                   </div>
-                  <div className="text-left">
-                    <p className="text-sm font-medium text-white">{profile?.display_name || 'User'}</p>
-                    <p className="text-xs text-purple-200">{user?.email}</p>
+                  <div className="text-left hidden sm:block">
+                    <p className="text-sm font-medium text-white truncate max-w-[120px]">{profile?.display_name || 'User'}</p>
                   </div>
-                  <ChevronDown className={`h-4 w-4 text-purple-300 transition-transform ${profileDropdownOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`h-3 w-3 text-purple-300 transition-transform hidden sm:block ${profileDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
               }
             >
-              <DropdownItem
+              <RobustDropdownItem
                 onClick={() => {
                   setCurrentView('profile')
                   setProfileDropdownOpen(false)
@@ -972,11 +1017,11 @@ const Dashboard = () => {
               >
                 <User className="h-4 w-4 mr-3" />
                 View Profile
-              </DropdownItem>
+              </RobustDropdownItem>
               
-              <DropdownSeparator />
+              <RobustDropdownSeparator />
               
-              <DropdownItem
+              <RobustDropdownItem
                 onClick={() => {
                   handleSignOut()
                   setProfileDropdownOpen(false)
@@ -986,10 +1031,12 @@ const Dashboard = () => {
               >
                 <LogOut className="h-4 w-4 mr-3" />
                 {signingOut ? 'Signing Out...' : 'Sign Out'}
-              </DropdownItem>
-            </Dropdown>
+              </RobustDropdownItem>
+            </RobustDropdown>
+            </div>
           </div>
         </div>
+        
       </nav>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

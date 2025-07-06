@@ -79,10 +79,11 @@ export const SessionList: React.FC<SessionListProps> = ({ onCreateSession, onSes
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-white">Sessions</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-white">Sessions</h2>
         <Button onClick={onCreateSession} className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
-          New Session
+          <span className="hidden sm:inline">New Session</span>
+          <span className="sm:hidden">New</span>
         </Button>
       </div>
 
