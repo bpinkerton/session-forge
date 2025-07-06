@@ -543,15 +543,15 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
                   const isConnected = !!connectedAccount
                   
                   return (
-                    <div key={provider} className="flex items-center justify-between p-3 bg-black/20 rounded-lg border border-purple-500/20">
-                      <div className="flex items-center space-x-3">
+                    <div key={provider} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-black/20 rounded-lg border border-purple-500/20 space-y-3 sm:space-y-0">
+                      <div className="flex items-center space-x-3 min-w-0 flex-1">
                         {renderProviderIcon(provider, isConnected, connectedAccount?.provider_avatar_url || undefined)}
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <p className="text-white text-sm font-medium">{providerInfo.name}</p>
                           {isConnected ? (
-                            <div className="flex items-center space-x-2">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
                               {connectedAccount.provider_username && (
-                                <p className="text-purple-300 text-xs">{connectedAccount.provider_username}</p>
+                                <p className="text-purple-300 text-xs truncate">{connectedAccount.provider_username}</p>
                               )}
                               <span className="text-green-400 text-xs">Connected</span>
                               {profile?.profile_picture_url === connectedAccount.provider_avatar_url && (
@@ -564,7 +564,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
                         </div>
                       </div>
                       
-                      <div className="flex space-x-2">
+                      <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 flex-shrink-0">
                         {isConnected ? (
                           <>
                             {connectedAccount?.provider_avatar_url && (
@@ -573,10 +573,11 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
                                 size="sm"
                                 onClick={() => handleOAuthAvatarSelect(provider)}
                                 disabled={saving}
-                                className="text-purple-400 hover:text-purple-300"
+                                className="text-purple-400 hover:text-purple-300 w-full sm:w-auto"
                               >
                                 <ExternalLink className="h-3 w-3 mr-1" />
-                                Use Avatar
+                                <span className="hidden sm:inline">Use Avatar</span>
+                                <span className="sm:hidden">Use</span>
                               </Button>
                             )}
                             <Button 
@@ -584,10 +585,11 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
                               size="sm"
                               onClick={() => handleDisconnectClick(provider)}
                               disabled={saving}
-                              className="text-red-400 hover:text-red-300"
+                              className="text-red-400 hover:text-red-300 w-full sm:w-auto"
                             >
                               <Unlink className="h-3 w-3 mr-1" />
-                              Disconnect
+                              <span className="hidden sm:inline">Disconnect</span>
+                              <span className="sm:hidden">Remove</span>
                             </Button>
                           </>
                         ) : (
@@ -599,7 +601,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
                               providerInfo.signIn()
                             }}
                             disabled={saving}
-                            className="text-purple-400 hover:text-purple-300"
+                            className="text-purple-400 hover:text-purple-300 w-full sm:w-auto"
                           >
                             <Link className="h-3 w-3 mr-1" />
                             Connect
