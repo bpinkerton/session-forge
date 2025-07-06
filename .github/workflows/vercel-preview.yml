@@ -1,0 +1,82 @@
+name: Vercel Preview Deployment
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  test-before-preview:
+    name: Run Tests Before Preview
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run tests
+      run: npm run test:run
+      
+    - name: Run linter
+      run: npm run lint
+      continue-on-error: true  # Don't block preview on lint warnings
+      
+    - name: Type check
+      run: npx tsc --noEmit
+      
+  deploy-preview:
+    name: Deploy Preview to Vercel
+    runs-on: ubuntu-latest
+    needs: test-before-preview
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Vercel CLI
+      run: npm install --global vercel@latest
+      
+    - name: Pull Vercel Environment Information
+      run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+      
+    - name: Build Project Artifacts
+      run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+      
+    - name: Deploy Preview to Vercel
+      id: deploy
+      run: |
+        echo "🚀 Deploying preview to Vercel..."
+        DEPLOYMENT_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+        echo "DEPLOYMENT_URL=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+        echo "✅ Preview deployed to: $DEPLOYMENT_URL"
+        
+    - name: Comment PR with Preview URL
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const deploymentUrl = '${{ steps.deploy.outputs.DEPLOYMENT_URL }}';
+          const comment = `🚀 **Preview Deployment Ready!**
+          
+          - Preview URL: ${deploymentUrl}
+          - All tests passed ✅
+          
+          This preview will be updated automatically as you push new commits.`;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
