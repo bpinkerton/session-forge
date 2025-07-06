@@ -781,22 +781,24 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
       {/* Tab Navigation */}
       <div className="flex space-x-1 bg-black/20 backdrop-blur-sm border border-purple-500/20 rounded-lg p-1">
         {[
-          { id: 'general', label: 'General', icon: User },
-          { id: 'accounts', label: 'Accounts', icon: Link },
-          { id: 'preferences', label: 'Preferences', icon: Calendar },
-          { id: 'systems', label: 'TTRPG Systems', icon: Gamepad2 }
-        ].map(({ id, label, icon: Icon }) => (
+          { id: 'general', label: 'General', shortLabel: 'General', icon: User },
+          { id: 'accounts', label: 'Accounts', shortLabel: 'Accounts', icon: Link },
+          { id: 'preferences', label: 'Preferences', shortLabel: 'Prefs', icon: Calendar },
+          { id: 'systems', label: 'TTRPG Systems', shortLabel: 'TTRPG', icon: Gamepad2 }
+        ].map(({ id, label, shortLabel, icon: Icon }) => (
           <button
             key={id}
             onClick={() => setActiveTab(id as 'general' | 'accounts' | 'preferences' | 'systems')}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`flex items-center justify-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors flex-1 min-w-0 ${
               activeTab === id
                 ? 'bg-purple-600 text-white'
                 : 'text-purple-300 hover:text-purple-100 hover:bg-purple-600/20'
             }`}
+            title={label}
           >
-            <Icon className="h-4 w-4" />
-            <span>{label}</span>
+            <Icon className="h-4 w-4 flex-shrink-0" />
+            <span className="hidden sm:inline truncate">{label}</span>
+            <span className="sm:hidden truncate">{shortLabel}</span>
           </button>
         ))}
       </div>
