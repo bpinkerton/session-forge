@@ -45,6 +45,38 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
+    - name: Get Supabase preview branch details
+      id: branch-info
+      run: |
+        # Install Supabase CLI if needed
+        npm install -g supabase
+        
+        # Get branch details
+        BRANCH_NAME="pr-${{ github.event.number }}"
+        
+        # Check if branch exists
+        BRANCH_EXISTS=$(npx supabase branches list \
+          --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} \
+          --experimental --json | jq -r ".[] | select(.name == \"$BRANCH_NAME\") | .name")
+        
+        if [ -n "$BRANCH_EXISTS" ]; then
+          # Get branch details
+          BRANCH_DETAILS=$(npx supabase branches show $BRANCH_NAME \
+            --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} \
+            --experimental --json)
+          
+          BRANCH_URL=$(echo $BRANCH_DETAILS | jq -r '.url')
+          BRANCH_ANON_KEY=$(echo $BRANCH_DETAILS | jq -r '.anon_key')
+          
+          echo "branch_url=$BRANCH_URL" >> $GITHUB_OUTPUT
+          echo "branch_anon_key=$BRANCH_ANON_KEY" >> $GITHUB_OUTPUT
+          echo "branch_exists=true" >> $GITHUB_OUTPUT
+        else
+          # Use staging branch as fallback
+          echo "branch_exists=false" >> $GITHUB_OUTPUT
+          echo "⚠️ No preview branch found, will use staging environment"
+        fi
+      
     - name: Install Vercel CLI
       run: npm install --global vercel@latest
       
@@ -52,7 +84,12 @@ jobs:
       run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
       
     - name: Build Project Artifacts
-      run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+      env:
+        VITE_SUPABASE_URL: ${{ steps.branch-info.outputs.branch_exists == 'true' && steps.branch-info.outputs.branch_url || secrets.STAGING_SUPABASE_URL }}
+        VITE_SUPABASE_ANON_KEY: ${{ steps.branch-info.outputs.branch_exists == 'true' && steps.branch-info.outputs.branch_anon_key || secrets.STAGING_SUPABASE_ANON_KEY }}
+      run: |
+        echo "🔨 Building with Supabase branch: ${{ steps.branch-info.outputs.branch_exists == 'true' && 'preview' || 'staging' }}"
+        vercel build --token=${{ secrets.VERCEL_TOKEN }}
       
     - name: Deploy Preview to Vercel
       id: deploy
