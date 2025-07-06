@@ -1,0 +1,54 @@
+name: Vercel Production Deployment
+
+on:
+  workflow_run:
+    workflows: ["Deployment with Test Gates"]
+    types:
+      - completed
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  deploy-production:
+    name: Deploy to Vercel Production
+    runs-on: ubuntu-latest
+    # Only deploy if the test workflow succeeded
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        
+    - name: Install Vercel CLI
+      run: npm install --global vercel@latest
+      
+    - name: Pull Vercel Environment Information
+      run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      
+    - name: Build Project Artifacts
+      run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      
+    - name: Deploy to Vercel
+      run: |
+        echo "🚀 Deploying to Vercel Production..."
+        vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        echo "✅ Deployment completed successfully"
+        
+  notify-failed-deployment:
+    name: Notify Failed Deployment
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    
+    steps:
+    - name: Deployment Blocked
+      run: |
+        echo "❌ Deployment blocked - tests failed!"
+        echo "Please check the test results and fix any issues before deploying."
+        exit 1
