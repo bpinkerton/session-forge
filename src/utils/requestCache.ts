@@ -8,7 +8,7 @@ class RequestCache {
     
     // Return cached promise if still valid
     if (cached && (now - cached.timestamp) < this.TTL) {
-      return cached.promise
+      return cached.promise as Promise<T>
     }
     
     // Create new request

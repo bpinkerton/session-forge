@@ -52,9 +52,9 @@ export const CampaignManagement: React.FC<CampaignManagementProps> = ({ onBack }
 
   // Override the original onBack to intercept it
   React.useEffect(() => {
-    const originalHandleBackToHome = (window as Record<string, unknown>).handleBackToHome as ((...args: unknown[]) => unknown) | undefined
+    const originalHandleBackToHome = (window as unknown as Record<string, unknown>).handleBackToHome as ((...args: unknown[]) => unknown) | undefined
     if (originalHandleBackToHome) {
-      (window as Record<string, unknown>).handleBackToHome = (...args: unknown[]) => {
+      (window as unknown as Record<string, unknown>).handleBackToHome = (...args: unknown[]) => {
         if (inlineEdit.editingField || preventingNavigationRef.current) {
           return
         }
@@ -62,7 +62,7 @@ export const CampaignManagement: React.FC<CampaignManagementProps> = ({ onBack }
       }
       
       return () => {
-        (window as Record<string, unknown>).handleBackToHome = originalHandleBackToHome
+        (window as unknown as Record<string, unknown>).handleBackToHome = originalHandleBackToHome
       }
     }
   }, [inlineEdit.editingField])
