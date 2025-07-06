@@ -58,8 +58,19 @@ To get these values:
 graph LR
     A[Push to main] --> B[Test Suite Runs]
     B --> C{Tests Pass?}
-    C -->|Yes| D[Deploy to Vercel]
+    C -->|Yes| D[Deploy to Production]
     C -->|No| E[Deployment Blocked]
+```
+
+### Staging (develop branch)
+
+```mermaid
+graph LR
+    A[Push to develop] --> B[CI/CD Pipeline]
+    B --> C{Tests Pass?}
+    C -->|Yes| D[Deploy to Staging]
+    C -->|No| E[Deployment Blocked]
+    D --> F[Available at staging URL]
 ```
 
 ### Preview (Pull Requests)
@@ -72,6 +83,13 @@ graph LR
     C -->|No| E[No Preview]
     D --> F[Comment URL on PR]
 ```
+
+### Feature Branches
+
+Feature branches (`feature/*`) do NOT trigger automatic deployments. They only get deployed when:
+1. A pull request is opened (preview deployment)
+2. They are merged to `develop` (staging deployment)
+3. They are merged to `main` (production deployment)
 
 ## Manual Deployment
 
