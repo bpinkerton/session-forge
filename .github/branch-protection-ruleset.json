@@ -25,42 +25,34 @@
     {
       "type": "required_status_checks",
       "parameters": {
-        "strict_required_status_checks_policy": true,
         "required_status_checks": [
           {
-            "context": "Test Suite",
-            "integration_id": null
+            "context": "Test Suite"
           },
           {
-            "context": "Build Application", 
-            "integration_id": null
+            "context": "Build Application"
           },
           {
-            "context": "Lint & Format Check",
-            "integration_id": null
+            "context": "Lint & Format Check"
           },
           {
-            "context": "Build Check",
-            "integration_id": null
+            "context": "Build Check"
           }
-        ]
+        ],
+        "strict_required_status_checks_policy": true
       }
     },
     {
-      "type": "non_fast_forward",
-      "parameters": {}
+      "type": "non_fast_forward"
     },
     {
-      "type": "required_linear_history",
-      "parameters": {}
+      "type": "required_linear_history"
     },
     {
-      "type": "deletion",
-      "parameters": {}
+      "type": "deletion"
     },
     {
-      "type": "creation",
-      "parameters": {}
+      "type": "creation"
     },
     {
       "type": "update",
@@ -69,11 +61,5 @@
       }
     }
   ],
-  "bypass_actors": [
-    {
-      "actor_id": 1,
-      "actor_type": "Integration",
-      "bypass_mode": "always"
-    }
-  ]
+  "bypass_actors": []
 }

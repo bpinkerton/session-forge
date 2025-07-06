@@ -16,22 +16,19 @@
     {
       "type": "required_status_checks",
       "parameters": {
-        "strict_required_status_checks_policy": false,
         "required_status_checks": [
           {
-            "context": "Test Suite",
-            "integration_id": null
+            "context": "Test Suite"
           },
           {
-            "context": "Build Application",
-            "integration_id": null
+            "context": "Build Application"
           }
-        ]
+        ],
+        "strict_required_status_checks_policy": false
       }
     },
     {
-      "type": "non_fast_forward",
-      "parameters": {}
+      "type": "non_fast_forward"
     }
   ],
   "bypass_actors": []
