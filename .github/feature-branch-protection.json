@@ -1,0 +1,38 @@
+{
+  "name": "Feature Branch Standards",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": [
+        "refs/heads/feature/*",
+        "refs/heads/hotfix/*",
+        "refs/heads/bugfix/*"
+      ],
+      "exclude": []
+    }
+  },
+  "rules": [
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "strict_required_status_checks_policy": false,
+        "required_status_checks": [
+          {
+            "context": "Test Suite",
+            "integration_id": null
+          },
+          {
+            "context": "Build Application",
+            "integration_id": null
+          }
+        ]
+      }
+    },
+    {
+      "type": "non_fast_forward",
+      "parameters": {}
+    }
+  ],
+  "bypass_actors": []
+}
