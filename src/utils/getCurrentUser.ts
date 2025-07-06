@@ -2,10 +2,10 @@ import { useAuthStore } from '@/stores/auth'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
 
-// Cache for the current user to avoid repeated auth store access
-let userCache: User | null = null
-let cacheTimestamp = 0
-const CACHE_DURATION = 30000 // 30 seconds
+// Cache for the current user to avoid repeated auth store access (disabled)
+// let userCache: User | null = null
+// let cacheTimestamp = 0
+// const CACHE_DURATION = 30000 // 30 seconds
 
 /**
  * Get the current authenticated user without making an API call
@@ -15,9 +15,9 @@ export const getCurrentUser = (): User | null => {
   try {
     const { user } = useAuthStore.getState()
     
-    // Update cache
-    userCache = user ?? null
-    cacheTimestamp = Date.now()
+    // Update cache (disabled)
+    // userCache = user ?? null
+    // cacheTimestamp = Date.now()
     
     return user ?? null
   } catch (error) {

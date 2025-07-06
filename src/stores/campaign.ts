@@ -464,7 +464,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
       // Fetch member profiles separately
       let membersWithProfiles = campaign.members || []
       if (campaign.members && campaign.members.length > 0) {
-        const memberUserIds = campaign.members.map((member: any) => member.user_id)
+        const memberUserIds = campaign.members.map((member: { user_id: string }) => member.user_id)
         
         const { data: memberProfiles, error: memberProfilesError } = await supabase
           .from('user_profiles')
@@ -586,7 +586,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
       // Check if user is a member
       const isMember = campaign.members?.some((member: { user_id: string }) => member.user_id === user.id)
       return isMember || false
-    } catch (error) {
+    } catch {
       return false
     }
   }

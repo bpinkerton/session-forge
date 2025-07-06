@@ -172,7 +172,7 @@ export const useInvitationStore = create<InvitationState>((set) => ({
         valid: true, 
         campaign: data.campaign as Campaign 
       }
-    } catch (error) {
+    } catch {
       return { valid: false, error: 'Failed to validate invitation code' }
     }
   },
