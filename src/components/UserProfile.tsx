@@ -1,5 +1,6 @@
 import React from 'react'
 import { Button } from '@/components/ui/button'
+import { ThemedButton } from '@/components/ui/themed-button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { ArrowLeft, User, Calendar, Gamepad2, Link, Camera, CheckCircle2, Upload, Trash2, ExternalLink, Unlink, Loader2 } from 'lucide-react'
@@ -381,27 +382,25 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
                     )}
                   </div>
                   <div className="flex flex-col space-y-2">
-                    <div className="flex space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                      <ThemedButton 
                         onClick={() => fileInputRef.current?.click()}
                         disabled={saving}
+                        className="w-full sm:w-auto"
                       >
                         <Upload className="h-4 w-4 mr-1" />
                         Upload Picture
-                      </Button>
+                      </ThemedButton>
                       {profile?.profile_picture_url && (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <ThemedButton 
+                          variant="destructive"
                           onClick={deleteProfilePicture}
                           disabled={saving}
-                          className="text-red-400 hover:text-red-300"
+                          className="w-full sm:w-auto"
                         >
                           <Trash2 className="h-4 w-4 mr-1" />
                           Remove
-                        </Button>
+                        </ThemedButton>
                       )}
                     </div>
                     
@@ -568,42 +567,37 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
                         {isConnected ? (
                           <>
                             {connectedAccount?.provider_avatar_url && (
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
+                              <ThemedButton 
                                 onClick={() => handleOAuthAvatarSelect(provider)}
                                 disabled={saving}
-                                className="text-purple-400 hover:text-purple-100 hover:bg-purple-500/20 border border-purple-500/30 bg-black/20 w-full sm:w-auto"
+                                className="w-full sm:w-auto"
                               >
                                 <ExternalLink className="h-3 w-3 mr-1" />
                                 Use Avatar
-                              </Button>
+                              </ThemedButton>
                             )}
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
+                            <ThemedButton 
+                              variant="destructive"
                               onClick={() => handleDisconnectClick(provider)}
                               disabled={saving}
-                              className="text-red-400 hover:text-red-100 hover:bg-red-500/20 border border-red-500/30 bg-black/20 w-full sm:w-auto"
+                              className="w-full sm:w-auto"
                             >
                               <Unlink className="h-3 w-3 mr-1" />
                               Disconnect
-                            </Button>
+                            </ThemedButton>
                           </>
                         ) : (
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
+                          <ThemedButton 
                             onClick={() => {
                               setHasDisconnected(false) // Reset flag when manually connecting
                               providerInfo.signIn()
                             }}
                             disabled={saving}
-                            className="text-purple-400 hover:text-purple-100 hover:bg-purple-500/20 border border-purple-500/30 bg-black/20 w-full sm:w-auto"
+                            className="w-full sm:w-auto"
                           >
                             <Link className="h-3 w-3 mr-1" />
                             Connect
-                          </Button>
+                          </ThemedButton>
                         )}
                       </div>
                     </div>
