@@ -1,6 +1,7 @@
 import React from 'react'
 import { render, RenderOptions } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
+import { vi } from 'vitest'
 
 // Mock Supabase client
 const mockSupabaseClient = {

@@ -1,5 +1,5 @@
 class RequestCache {
-  private cache = new Map<string, { promise: Promise<any>, timestamp: number }>()
+  private cache = new Map<string, { promise: Promise<unknown>, timestamp: number }>()
   private TTL = 30000 // 30 seconds cache for better UX
 
   async get<T>(key: string, fetcher: () => Promise<T>): Promise<T> {

@@ -4,7 +4,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner'
 
 // Mock lucide-react
 vi.mock('lucide-react', () => ({
-  Loader2: ({ className, ...props }: any) => (
+  Loader2: ({ className, ...props }: { className?: string; [key: string]: unknown }) => (
     <div data-testid="loading-spinner" className={className} {...props} />
   )
 }))

@@ -14,7 +14,7 @@ export interface Character {
   race: string | null
   background: string | null
   dndbeyond_id: string | null
-  stats: Record<string, any> | null // JSONB for character sheet data
+  stats: Record<string, unknown> | null // JSONB for character sheet data
   backstory: string | null
   created_at: string
   updated_at: string
