@@ -1,0 +1,46 @@
+{
+  "name": "Main and Develop Branch Protection - Solo Maintainer",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": [
+        "refs/heads/main",
+        "refs/heads/develop"
+      ],
+      "exclude": []
+    }
+  },
+  "rules": [
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "required_status_checks": [
+          {
+            "context": "Build Application"
+          },
+          {
+            "context": "Lint & Format Check"
+          },
+          {
+            "context": "Build Check"
+          }
+        ],
+        "strict_required_status_checks_policy": true
+      }
+    },
+    {
+      "type": "non_fast_forward"
+    },
+    {
+      "type": "required_linear_history"
+    },
+    {
+      "type": "deletion"
+    },
+    {
+      "type": "creation"
+    }
+  ],
+  "bypass_actors": []
+}

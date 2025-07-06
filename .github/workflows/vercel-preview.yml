@@ -51,30 +51,66 @@ jobs:
         # Install Supabase CLI if needed
         npm install -g supabase
         
-        # Get branch details
+        # Authenticate Supabase CLI
+        echo "🔑 Authenticating with Supabase CLI..."
+        echo "${{ secrets.SUPABASE_ACCESS_TOKEN }}" | npx supabase auth login --token --experimental
+        
+        # Get branch details with retry logic
         BRANCH_NAME="pr-${{ github.event.number }}"
+        RETRY_COUNT=0
+        MAX_RETRIES=10
+        BRANCH_EXISTS=false
         
-        # Check if branch exists
-        BRANCH_EXISTS=$(npx supabase branches list \
-          --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} \
-          --experimental --json | jq -r ".[] | select(.name == \"$BRANCH_NAME\") | .name")
+        echo "🔍 Looking for Supabase preview branch: $BRANCH_NAME"
         
-        if [ -n "$BRANCH_EXISTS" ]; then
-          # Get branch details
+        while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+          # Check if branch exists with better error handling
+          if BRANCH_LIST=$(npx supabase branches list \
+            --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} \
+            --experimental --json 2>/dev/null); then
+            
+            FOUND_BRANCH=$(echo "$BRANCH_LIST" | jq -r ".[] | select(.name == \"$BRANCH_NAME\") | .name" 2>/dev/null || echo "")
+            
+            if [ -n "$FOUND_BRANCH" ]; then
+              echo "✅ Supabase branch found: $BRANCH_NAME"
+              BRANCH_EXISTS=true
+              break
+            fi
+          fi
+          
+          echo "⏳ Waiting for Supabase branch... (attempt $((RETRY_COUNT + 1))/$MAX_RETRIES)"
+          sleep 15
+          RETRY_COUNT=$((RETRY_COUNT + 1))
+        done
+        
+        if [ "$BRANCH_EXISTS" = true ]; then
+          # Get branch details with validation
           BRANCH_DETAILS=$(npx supabase branches show $BRANCH_NAME \
             --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} \
             --experimental --json)
           
-          BRANCH_URL=$(echo $BRANCH_DETAILS | jq -r '.url')
-          BRANCH_ANON_KEY=$(echo $BRANCH_DETAILS | jq -r '.anon_key')
-          
-          echo "branch_url=$BRANCH_URL" >> $GITHUB_OUTPUT
-          echo "branch_anon_key=$BRANCH_ANON_KEY" >> $GITHUB_OUTPUT
-          echo "branch_exists=true" >> $GITHUB_OUTPUT
+          # Validate JSON and extract values
+          if [ -n "$BRANCH_DETAILS" ] && echo "$BRANCH_DETAILS" | jq empty 2>/dev/null; then
+            BRANCH_URL=$(echo "$BRANCH_DETAILS" | jq -r '.url // empty')
+            BRANCH_ANON_KEY=$(echo "$BRANCH_DETAILS" | jq -r '.anon_key // empty')
+            
+            if [ -n "$BRANCH_URL" ] && [ -n "$BRANCH_ANON_KEY" ]; then
+              echo "branch_url=$BRANCH_URL" >> $GITHUB_OUTPUT
+              echo "branch_anon_key=$BRANCH_ANON_KEY" >> $GITHUB_OUTPUT
+              echo "branch_exists=true" >> $GITHUB_OUTPUT
+              echo "✅ Using Supabase preview branch: $BRANCH_URL"
+            else
+              echo "❌ Missing branch details, falling back to staging"
+              echo "branch_exists=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "❌ Invalid branch details, falling back to staging"
+            echo "branch_exists=false" >> $GITHUB_OUTPUT
+          fi
         else
           # Use staging branch as fallback
           echo "branch_exists=false" >> $GITHUB_OUTPUT
-          echo "⚠️ No preview branch found, will use staging environment"
+          echo "⚠️ No preview branch found after $MAX_RETRIES attempts, using staging environment"
         fi
       
     - name: Install Vercel CLI

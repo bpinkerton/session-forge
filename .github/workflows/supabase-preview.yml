@@ -27,6 +27,11 @@ jobs:
       run: |
         npm install -g supabase
         
+    - name: Authenticate Supabase CLI
+      run: |
+        echo "🔑 Authenticating with Supabase CLI..."
+        echo "${{ secrets.SUPABASE_ACCESS_TOKEN }}" | npx supabase auth login --token --experimental
+        
     - name: Create preview branch
       id: create-branch
       run: |
@@ -35,24 +40,49 @@ jobs:
         # Create branch name
         BRANCH_NAME="pr-${{ github.event.number }}"
         
-        # Create the branch
-        npx supabase branches create $BRANCH_NAME \
-          --project-ref $SUPABASE_PROJECT_ID \
-          --experimental
+        # Check if branch already exists
+        if npx supabase branches show $BRANCH_NAME \
+          --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} \
+          --experimental --json >/dev/null 2>&1; then
+          echo "✅ Branch already exists, reusing: $BRANCH_NAME"
+        else
+          # Create the branch with error handling
+          if ! npx supabase branches create $BRANCH_NAME \
+            --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} \
+            --experimental; then
+            echo "❌ Failed to create Supabase branch"
+            exit 1
+          fi
+          echo "✅ Created new branch: $BRANCH_NAME"
+        fi
         
-        # Get branch details
+        # Get branch details with validation
         BRANCH_DETAILS=$(npx supabase branches show $BRANCH_NAME \
-          --project-ref $SUPABASE_PROJECT_ID \
+          --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} \
           --experimental --json)
         
-        # Extract URL and anon key
-        BRANCH_URL=$(echo $BRANCH_DETAILS | jq -r '.url')
-        BRANCH_ANON_KEY=$(echo $BRANCH_DETAILS | jq -r '.anon_key')
+        # Validate JSON before parsing
+        if [ -z "$BRANCH_DETAILS" ] || ! echo "$BRANCH_DETAILS" | jq empty 2>/dev/null; then
+          echo "❌ Invalid JSON response from Supabase: $BRANCH_DETAILS"
+          exit 1
+        fi
+        
+        # Extract URL and anon key with error checking
+        BRANCH_URL=$(echo "$BRANCH_DETAILS" | jq -r '.url // empty')
+        BRANCH_ANON_KEY=$(echo "$BRANCH_DETAILS" | jq -r '.anon_key // empty')
+        
+        if [ -z "$BRANCH_URL" ] || [ -z "$BRANCH_ANON_KEY" ]; then
+          echo "❌ Missing required branch details"
+          echo "Branch details: $BRANCH_DETAILS"
+          exit 1
+        fi
         
         # Output for next steps
         echo "branch_url=$BRANCH_URL" >> $GITHUB_OUTPUT
         echo "branch_anon_key=$BRANCH_ANON_KEY" >> $GITHUB_OUTPUT
         echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+        
+        echo "✅ Branch ready: $BRANCH_URL"
         
     - name: Update PR description with branch info
       uses: actions/github-script@v7
@@ -113,17 +143,33 @@ jobs:
     - name: Install Supabase CLI
       run: npm install -g supabase
       
+    - name: Authenticate Supabase CLI
+      run: |
+        echo "🔑 Authenticating with Supabase CLI..."
+        echo "${{ secrets.SUPABASE_ACCESS_TOKEN }}" | npx supabase auth login --token --experimental
+      
     - name: Sync branch with latest migrations
       run: |
         echo "🔄 Syncing preview branch with latest schema..."
         
         BRANCH_NAME="pr-${{ github.event.number }}"
         
-        # Push migrations to branch
-        npx supabase db push \
+        # Check if branch exists before syncing
+        if ! npx supabase branches show $BRANCH_NAME \
+          --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} \
+          --experimental --json >/dev/null 2>&1; then
+          echo "❌ Preview branch does not exist: $BRANCH_NAME"
+          exit 1
+        fi
+        
+        # Push migrations to branch with error handling
+        if ! npx supabase db push \
           --branch $BRANCH_NAME \
-          --project-ref $SUPABASE_PROJECT_ID \
-          --experimental
+          --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} \
+          --experimental; then
+          echo "❌ Failed to sync schema with preview branch"
+          exit 1
+        fi
           
         echo "✅ Preview branch synced with latest migrations"
         
@@ -141,18 +187,33 @@ jobs:
     - name: Install Supabase CLI
       run: npm install -g supabase
       
+    - name: Authenticate Supabase CLI
+      run: |
+        echo "🔑 Authenticating with Supabase CLI..."
+        echo "${{ secrets.SUPABASE_ACCESS_TOKEN }}" | npx supabase auth login --token --experimental
+      
     - name: Delete preview branch
       run: |
         echo "🧹 Cleaning up Supabase preview branch for PR #${{ github.event.number }}..."
         
         BRANCH_NAME="pr-${{ github.event.number }}"
         
-        # Delete the branch
-        npx supabase branches delete $BRANCH_NAME \
-          --project-ref $SUPABASE_PROJECT_ID \
-          --experimental --confirm
+        # Check if branch exists before trying to delete
+        if npx supabase branches show $BRANCH_NAME \
+          --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} \
+          --experimental --json >/dev/null 2>&1; then
           
-        echo "✅ Preview branch deleted"
+          # Delete the branch
+          if npx supabase branches delete $BRANCH_NAME \
+            --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} \
+            --experimental --confirm; then
+            echo "✅ Preview branch deleted: $BRANCH_NAME"
+          else
+            echo "⚠️ Failed to delete branch, but continuing..."
+          fi
+        else
+          echo "ℹ️ Branch already deleted or does not exist: $BRANCH_NAME"
+        fi
         
     - name: Comment on PR
       uses: actions/github-script@v7
