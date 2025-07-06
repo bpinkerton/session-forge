@@ -706,33 +706,41 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {ttrpgSystems.map((system) => (
                   <button
                     key={system.id}
                     onClick={() => handleSystemToggle(system.id)}
-                    className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
+                    className={`px-3 py-3 rounded text-sm font-medium transition-colors min-h-[44px] text-left ${
                       pendingSystemIds.includes(system.id)
                         ? 'bg-purple-600 text-white'
                         : 'bg-black/20 border border-purple-500/30 text-purple-200 hover:bg-purple-600/20'
                     }`}
+                    title={system.name}
                   >
-                    {system.name}
+                    <span className="truncate block">{system.name}</span>
                   </button>
                 ))}
               </div>
               
               <div className="mt-6 p-4 bg-purple-600/10 rounded-lg border border-purple-500/20">
                 <h4 className="text-sm font-medium text-purple-200 mb-2">Selected Systems:</h4>
-                <p className="text-purple-300 text-sm">
-                  {pendingSystemIds.length > 0 
-                    ? ttrpgSystems
+                <div className="text-purple-300 text-sm">
+                  {pendingSystemIds.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {ttrpgSystems
                         .filter(s => pendingSystemIds.includes(s.id))
-                        .map(s => s.name)
-                        .join(', ')
-                    : 'No systems selected yet'
-                  }
-                </p>
+                        .map(s => (
+                          <span key={s.id} className="px-2 py-1 bg-purple-600/20 rounded text-xs">
+                            {s.name}
+                          </span>
+                        ))
+                      }
+                    </div>
+                  ) : (
+                    <p>No systems selected yet</p>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
