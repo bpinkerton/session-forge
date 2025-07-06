@@ -1,7 +1,7 @@
 import React from 'react'
 import { render, RenderOptions } from '@testing-library/react'
-import { BrowserRouter } from 'react-router-dom'
 import { vi } from 'vitest'
+import { AllTheProviders } from './test-providers'
 
 // Mock Supabase client
 const mockSupabaseClient = {
@@ -37,14 +37,6 @@ vi.mock('@/lib/supabase', () => ({
   supabase: mockSupabaseClient
 }))
 
-// Create a custom render function that includes providers
-const AllTheProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return (
-    <BrowserRouter>
-      {children}
-    </BrowserRouter>
-  )
-}
 
 const customRender = (
   ui: React.ReactElement,
