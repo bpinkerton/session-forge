@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
-import type { Campaign, CampaignFull, CampaignCharacter } from '@/types'
+import { requestCache } from '@/utils/requestCache'
+import { getCurrentUser, requireAuth } from '@/utils/getCurrentUser'
+import type { Campaign, CampaignFull, CampaignCharacter, CampaignMemberWithProfile } from '@/types'
 
 interface CampaignState {
   campaigns: Campaign[]
@@ -8,6 +10,8 @@ interface CampaignState {
   userRole: 'dm' | 'player' | 'observer' | null
   loading: boolean
   error: string | null
+  lastCampaignsFetched: number | null
+  cacheTimeout: number
   
   // Campaign actions
   fetchUserCampaigns: () => Promise<void>
@@ -32,6 +36,7 @@ interface CampaignState {
   fetchCampaignFull: (campaignId: string) => Promise<void>
   getUserRoleInCampaign: (campaignId: string) => 'dm' | 'player' | 'observer' | null
   validateCurrentCampaignAccess: () => Promise<boolean>
+  getAllMembersWithDM: () => CampaignMemberWithProfile[]
   clearError: () => void
 }
 
@@ -41,45 +46,63 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
   userRole: null,
   loading: false,
   error: null,
+  lastCampaignsFetched: null,
+  cacheTimeout: 300000, // 5 minutes
 
   fetchUserCampaigns: async () => {
+    const { lastCampaignsFetched, cacheTimeout, campaigns } = get()
+    const now = Date.now()
+    
+    // Skip fetch if recently cached and campaigns exist
+    if (campaigns.length > 0 && lastCampaignsFetched && (now - lastCampaignsFetched) < cacheTimeout) {
+      return
+    }
+    
     set({ loading: true, error: null })
     try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('No authenticated user')
+      const user = requireAuth()
 
-      // Get campaigns where user is DM
-      const { data: dmCampaigns, error: dmError } = await supabase
-        .from('campaigns')
-        .select('*')
-        .eq('dm_user_id', user.id)
-        .eq('is_active', true)
+      const cacheKey = `user-campaigns:${user.id}`
+      
+      const campaignsData = await requestCache.get(cacheKey, async () => {
+        // Get campaigns where user is DM
+        const { data: dmCampaigns, error: dmError } = await supabase
+          .from('campaigns')
+          .select('*')
+          .eq('dm_user_id', user.id)
+          .eq('is_active', true)
 
-      if (dmError) throw dmError
+        if (dmError) throw dmError
 
-      // Get campaigns where user is a member (with fresh check)
-      const { data: memberCampaigns, error: memberError } = await supabase
-        .from('campaign_members')
-        .select(`
-          campaign_id,
-          campaigns!inner(*)
-        `)
-        .eq('user_id', user.id)
-        .eq('campaigns.is_active', true)
+        // Get campaigns where user is a member  
+        const { data: membershipData, error: memberError } = await supabase
+          .from('campaign_members')
+          .select(`
+            campaign_id,
+            campaigns!inner(*)
+          `)
+          .eq('user_id', user.id)
+          .eq('campaigns.is_active', true)
 
-      if (memberError) throw memberError
+        if (memberError) throw memberError
 
-      // Extract campaign data from member relationships
-      const memberCampaignData = memberCampaigns?.map((m: any) => m.campaigns).filter(Boolean) || []
+        // Extract campaigns from membership data
+        const memberCampaigns = membershipData?.map((m: unknown) => (m as { campaign_id: string; campaigns: Campaign }).campaigns).filter((campaign): campaign is Campaign => Boolean(campaign)) || []
 
-      // Combine and deduplicate
-      const allCampaigns = [...(dmCampaigns || []), ...memberCampaignData]
-      const uniqueCampaigns = allCampaigns.filter((campaign, index, self) => 
-        index === self.findIndex(c => c.id === campaign.id)
-      )
+        // Combine and deduplicate
+        const allCampaigns = [...(dmCampaigns || []), ...memberCampaigns]
+        const uniqueCampaigns = allCampaigns.filter((campaign, index, self) => 
+          index === self.findIndex(c => c.id === campaign.id)
+        )
+        
+        return uniqueCampaigns
+      })
 
-      set({ campaigns: uniqueCampaigns, loading: false })
+      set({ 
+        campaigns: campaignsData,
+        lastCampaignsFetched: now,
+        loading: false 
+      })
     } catch (error) {
       set({ error: (error as Error).message, loading: false })
     }
@@ -108,9 +131,11 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
 
       if (memberError) throw memberError
 
-      // Add to local state
+      // Invalidate cache and add to local state
+      requestCache.invalidatePattern(/^user-campaigns:/)
       set(state => ({
         campaigns: [newCampaign, ...state.campaigns],
+        lastCampaignsFetched: null, // Force refresh next time
         loading: false
       }))
       
@@ -149,21 +174,16 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
   },
 
   deactivateCampaign: async (id: string) => {
-    console.log('Store: deactivateCampaign called with id:', id)
     set({ loading: true, error: null })
     try {
-      console.log('Store: Calling supabase RPC soft_delete_campaign')
       const { data, error } = await supabase
         .rpc('soft_delete_campaign', { campaign_id: id })
-
-      console.log('Store: RPC response:', { data, error })
 
       if (error) throw error
 
       const result = data as { success: boolean, error?: string, campaign_name?: string }
       
       if (result.success) {
-        console.log('Store: Deactivation successful, updating local state')
         // Remove from local state (since we only show active campaigns)
         set(state => ({
           campaigns: state.campaigns.filter(campaign => campaign.id !== id),
@@ -172,13 +192,12 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
         }))
         return { success: true }
       } else {
-        console.log('Store: Deactivation failed:', result.error)
         set({ error: result.error || 'Failed to deactivate campaign', loading: false })
         return { success: false, error: result.error }
       }
     } catch (error) {
       const errorMessage = (error as Error).message
-      console.log('Store: Exception during deactivation:', errorMessage)
+      console.error('Error deactivating campaign:', errorMessage)
       set({ error: errorMessage, loading: false })
       return { success: false, error: errorMessage }
     }
@@ -409,8 +428,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
     set({ loading: true, error: null })
     try {
       // Get current user
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('No authenticated user')
+      const user = requireAuth()
 
       // Fetch campaign with members and characters (force fresh data with timestamp)
       const { data: campaign, error: campaignError } = await supabase
@@ -429,15 +447,55 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
 
       if (campaignError) throw campaignError
 
+      // Fetch DM profile separately
+      let dmProfile = null
+      if (campaign.dm_user_id) {
+        const { data: dmProfileData, error: dmProfileError } = await supabase
+          .from('user_profiles')
+          .select('user_id, display_name, profile_picture_url')
+          .eq('user_id', campaign.dm_user_id)
+          .single()
+        
+        if (!dmProfileError) {
+          dmProfile = dmProfileData
+        }
+      }
+
+      // Fetch member profiles separately
+      let membersWithProfiles = campaign.members || []
+      if (campaign.members && campaign.members.length > 0) {
+        const memberUserIds = campaign.members.map((member: { user_id: string }) => member.user_id)
+        
+        const { data: memberProfiles, error: memberProfilesError } = await supabase
+          .from('user_profiles')
+          .select('user_id, display_name, profile_picture_url')
+          .in('user_id', memberUserIds)
+        
+        if (!memberProfilesError && memberProfiles) {
+          // Attach profiles to members
+          membersWithProfiles = campaign.members.map((member: { user_id: string }) => ({
+            ...member,
+            user_profile: memberProfiles.find(profile => profile.user_id === member.user_id)
+          }))
+        }
+      }
+
+      // Add DM profile and enhanced members to campaign
+      const campaignWithProfiles = {
+        ...campaign,
+        dm_profile: dmProfile,
+        members: membersWithProfiles
+      }
+
       // Determine user role in this campaign
       let userRole: 'dm' | 'player' | 'observer' | null = null
       
       // Check if user is the DM
-      if (campaign.dm_user_id === user.id) {
+      if (campaignWithProfiles.dm_user_id === user.id) {
         userRole = 'dm'
       } else {
         // Check if user is a member
-        const userMember = campaign.members?.find((member: any) => member.user_id === user.id)
+        const userMember = campaignWithProfiles.members?.find((member: { user_id: string; role: string }) => member.user_id === user.id)
         userRole = userMember?.role || null
       }
 
@@ -453,7 +511,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
       }
 
       set({
-        currentCampaign: campaign,
+        currentCampaign: campaignWithProfiles,
         userRole,
         loading: false
       })
@@ -477,13 +535,35 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
     set({ error: null })
   },
 
+  getAllMembersWithDM: () => {
+    const { currentCampaign } = get()
+    if (!currentCampaign) return []
+
+    const allMembers: CampaignMemberWithProfile[] = [...(currentCampaign.members || [])]
+
+    // Add DM as a member if they have a profile and aren't already in the members list
+    if (currentCampaign.dm_profile && !allMembers.some(m => m.user_id === currentCampaign.dm_user_id)) {
+      const dmAsMember = {
+        id: `dm-${currentCampaign.dm_user_id}`,
+        user_id: currentCampaign.dm_user_id,
+        campaign_id: currentCampaign.id,
+        role: 'dm' as const,
+        joined_at: currentCampaign.created_at,
+        user_profile: currentCampaign.dm_profile
+      }
+      allMembers.unshift(dmAsMember) // Put DM first
+    }
+
+    return allMembers
+  },
+
   // Check if user still has access to current campaign
   validateCurrentCampaignAccess: async () => {
     const { currentCampaign } = get()
     if (!currentCampaign) return true
 
     try {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = getCurrentUser()
       if (!user) return false
 
       // Check if user is still DM or member of this campaign
@@ -504,9 +584,9 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
       if (campaign.dm_user_id === user.id) return true
 
       // Check if user is a member
-      const isMember = campaign.members?.some((member: any) => member.user_id === user.id)
+      const isMember = campaign.members?.some((member: { user_id: string }) => member.user_id === user.id)
       return isMember || false
-    } catch (error) {
+    } catch {
       return false
     }
   }

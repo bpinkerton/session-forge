@@ -3,12 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tooltip } from '@/components/ui/tooltip'
 import { Plus, Sword, Users, UserPlus, Calendar, Trophy, Settings } from 'lucide-react'
 import { useCampaignStore } from '@/stores/campaign'
 import { useAuthStore } from '@/stores/auth'
 import { JoinCampaign } from './JoinCampaign'
 import { getDisplayStatus } from '@/constants/campaignStatus'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
+import { EmptyState } from '@/components/ui/empty-state'
 import type { Campaign } from '@/types'
 
 interface CampaignSetupProps {
@@ -89,24 +91,6 @@ const CreateCampaignForm = ({ onCancel, onSuccess }: { onCancel: () => void, onS
             />
           </div>
 
-          <div className="space-y-2">
-            <label htmlFor="status" className="text-sm font-medium">
-              Status
-            </label>
-            <Select
-              value={formData.status}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as Campaign['status'] }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="planning">Planning</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="on_hold">On Hold</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
 
           <div className="flex justify-end space-x-2 pt-4">
             <Button
@@ -157,15 +141,13 @@ export const CampaignSetup: React.FC<CampaignSetupProps> = ({ onCampaignSelected
 
   if (loading && campaigns.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-        <div className="text-white">Loading campaigns...</div>
-      </div>
+      <LoadingSpinner variant="page" text="Loading campaigns..." />
     )
   }
 
   if (showCreateForm) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="min-h-screen flex items-center justify-center bg-app-gradient">
         <CreateCampaignForm
           onCancel={() => setShowCreateForm(false)}
           onSuccess={handleCreateSuccess}
@@ -176,7 +158,7 @@ export const CampaignSetup: React.FC<CampaignSetupProps> = ({ onCampaignSelected
 
   if (showJoinForm) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <div className="min-h-screen flex items-center justify-center bg-app-gradient">
         <JoinCampaign
           onCancel={() => setShowJoinForm(false)}
           onSuccess={handleJoinSuccess}
@@ -186,7 +168,7 @@ export const CampaignSetup: React.FC<CampaignSetupProps> = ({ onCampaignSelected
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-app-gradient">
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
@@ -198,27 +180,29 @@ export const CampaignSetup: React.FC<CampaignSetupProps> = ({ onCampaignSelected
 
         {campaigns.length === 0 ? (
           <div className="max-w-md mx-auto">
-            <Card className="bg-black/20 backdrop-blur-sm border-purple-500/20">
-              <CardContent className="p-8 text-center">
-                <Users className="h-12 w-12 text-purple-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-white mb-2">No campaigns yet</h3>
-                <p className="text-purple-200 mb-6">
-                  Create your first campaign or join an existing one to get started
-                </p>
-                <div className="space-y-3">
-                  <Button onClick={() => setShowCreateForm(true)} className="w-full">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Your First Campaign
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setShowJoinForm(true)}
-                    className="w-full"
-                  >
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Join Existing Campaign
-                  </Button>
-                </div>
+            <Card className="bg-app-card">
+              <CardContent className="p-8">
+                <EmptyState
+                  icon={Users}
+                  title="No campaigns yet"
+                  description="Create your first campaign or join an existing one to get started"
+                  action={
+                    <div className="space-y-3">
+                      <Button onClick={() => setShowCreateForm(true)} className="w-full">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Your First Campaign
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setShowJoinForm(true)}
+                        className="w-full"
+                      >
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Join Existing Campaign
+                      </Button>
+                    </div>
+                  }
+                />
               </CardContent>
             </Card>
           </div>
@@ -245,7 +229,7 @@ export const CampaignSetup: React.FC<CampaignSetupProps> = ({ onCampaignSelected
               {campaigns.map((campaign) => (
                 <Card
                   key={campaign.id}
-                  className="bg-black/20 backdrop-blur-sm border-purple-500/20 hover:border-purple-400/30 transition-colors cursor-pointer"
+                  className="bg-app-card hover:border-purple-400/30 transition-colors cursor-pointer"
                   onClick={() => onCampaignSelected(campaign)}
                 >
                   <CardHeader>
@@ -253,9 +237,11 @@ export const CampaignSetup: React.FC<CampaignSetupProps> = ({ onCampaignSelected
                       <div className="flex-1">
                         <CardTitle className="text-white mb-1">{campaign.name}</CardTitle>
                         <div className="mb-2">
-                          <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${getDisplayStatus(campaign.status).color}`}>
-                            {getDisplayStatus(campaign.status).label}
-                          </span>
+                          <Tooltip content={getDisplayStatus(campaign.status).description}>
+                            <span className={`inline-flex px-2 py-1 rounded text-xs font-medium ${getDisplayStatus(campaign.status).color}`}>
+                              {getDisplayStatus(campaign.status).label}
+                            </span>
+                          </Tooltip>
                         </div>
                         {campaign.setting && (
                           <CardDescription className="text-purple-300">

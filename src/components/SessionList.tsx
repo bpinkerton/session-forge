@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Calendar, Clock, Plus } from 'lucide-react'
 import { useSessionStore } from '@/stores/session'
 import { useCampaignStore } from '@/stores/campaign'
+import { EmptyState } from '@/components/ui/empty-state'
 import type { Session } from '@/types'
 
 interface SessionListProps {
@@ -86,17 +87,19 @@ export const SessionList: React.FC<SessionListProps> = ({ onCreateSession, onSes
       </div>
 
       {sessions.length === 0 ? (
-        <Card className="bg-black/20 backdrop-blur-sm border-purple-500/20">
-          <CardContent className="p-8 text-center">
-            <Calendar className="h-12 w-12 text-purple-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-white mb-2">No sessions yet</h3>
-            <p className="text-purple-200 mb-4">
-              Create your first session to start planning your campaign
-            </p>
-            <Button onClick={onCreateSession}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create First Session
-            </Button>
+        <Card className="bg-app-card">
+          <CardContent className="p-8">
+            <EmptyState
+              icon={Calendar}
+              title="No sessions yet"
+              description="Create your first session to start planning your campaign"
+              action={
+                <Button onClick={onCreateSession}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create First Session
+                </Button>
+              }
+            />
           </CardContent>
         </Card>
       ) : (
@@ -104,7 +107,7 @@ export const SessionList: React.FC<SessionListProps> = ({ onCreateSession, onSes
           {sessions.map((session) => (
             <Card
               key={session.id}
-              className="bg-black/20 backdrop-blur-sm border-purple-500/20 hover:border-purple-400/30 transition-colors cursor-pointer"
+              className="bg-app-card hover:border-purple-400/30 transition-colors cursor-pointer"
               onClick={() => onSessionClick(session)}
             >
               <CardHeader>

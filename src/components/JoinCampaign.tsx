@@ -2,9 +2,10 @@ import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
+import { CheckCircle, XCircle } from 'lucide-react'
 import { useInvitationStore } from '@/stores/invitation'
 import { useCampaignStore } from '@/stores/campaign'
+import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import type { Campaign } from '@/types'
 
 interface JoinCampaignProps {
@@ -116,10 +117,10 @@ export const JoinCampaign: React.FC<JoinCampaignProps> = ({
   if (step === 'joining') {
     return (
       <div className="max-w-md mx-auto">
-        <Card className="bg-black/20 backdrop-blur-sm border-purple-500/20">
+        <Card className="bg-app-card">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
-              <Loader2 className="h-12 w-12 text-purple-400 animate-spin" />
+              <LoadingSpinner size="lg" />
             </div>
             <CardTitle className="text-white">Joining Campaign...</CardTitle>
             <CardDescription className="text-purple-200">
@@ -135,7 +136,7 @@ export const JoinCampaign: React.FC<JoinCampaignProps> = ({
     const campaign = validationResult.campaign
     return (
       <div className="max-w-md mx-auto">
-        <Card className="bg-black/20 backdrop-blur-sm border-purple-500/20">
+        <Card className="bg-app-card">
           <CardHeader className="text-center">
             <CardTitle className="text-white text-xl">{campaign.name}</CardTitle>
             {campaign.setting && (
@@ -177,7 +178,7 @@ export const JoinCampaign: React.FC<JoinCampaignProps> = ({
 
   return (
     <div className="max-w-md mx-auto">
-      <Card className="bg-black/20 backdrop-blur-sm border-purple-500/20">
+      <Card className="bg-app-card">
         <CardHeader className="text-center">
           <CardTitle className="text-white">Join Campaign</CardTitle>
           <CardDescription className="text-purple-200">
