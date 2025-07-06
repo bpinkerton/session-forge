@@ -57,7 +57,6 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   signInWithGoogle: async () => {
-    console.log('OAuth redirect URL:', window.location.origin + '?oauth_return=accounts&provider=google')
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {

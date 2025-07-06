@@ -1,9 +1,5 @@
 {
   "github": {
-    "enabled": false,
-    "silent": true
-  },
-  "git": {
-    "deploymentEnabled": false
+    "enabled": true
   }
 }
