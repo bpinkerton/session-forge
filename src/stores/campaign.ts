@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import { requestCache } from '@/utils/requestCache'
 import { getCurrentUser, requireAuth } from '@/utils/getCurrentUser'
-import type { Campaign, CampaignFull, CampaignCharacter } from '@/types'
+import type { Campaign, CampaignFull, CampaignCharacter, CampaignMemberWithProfile } from '@/types'
 
 interface CampaignState {
   campaigns: Campaign[]
@@ -87,7 +87,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
         if (memberError) throw memberError
 
         // Extract campaigns from membership data
-        const memberCampaigns = membershipData?.map((m: any) => m.campaigns).filter(Boolean) || []
+        const memberCampaigns = membershipData?.map((m: { campaigns: Campaign }) => m.campaigns).filter(Boolean) || []
 
         // Combine and deduplicate
         const allCampaigns = [...(dmCampaigns || []), ...memberCampaigns]
@@ -473,7 +473,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
         
         if (!memberProfilesError && memberProfiles) {
           // Attach profiles to members
-          membersWithProfiles = campaign.members.map((member: any) => ({
+          membersWithProfiles = campaign.members.map((member: { user_id: string }) => ({
             ...member,
             user_profile: memberProfiles.find(profile => profile.user_id === member.user_id)
           }))
@@ -495,7 +495,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
         userRole = 'dm'
       } else {
         // Check if user is a member
-        const userMember = campaignWithProfiles.members?.find((member: any) => member.user_id === user.id)
+        const userMember = campaignWithProfiles.members?.find((member: { user_id: string; role: string }) => member.user_id === user.id)
         userRole = userMember?.role || null
       }
 
@@ -539,7 +539,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
     const { currentCampaign } = get()
     if (!currentCampaign) return []
 
-    const allMembers: any[] = [...(currentCampaign.members || [])]
+    const allMembers: CampaignMemberWithProfile[] = [...(currentCampaign.members || [])]
 
     // Add DM as a member if they have a profile and aren't already in the members list
     if (currentCampaign.dm_profile && !allMembers.some(m => m.user_id === currentCampaign.dm_user_id)) {
@@ -584,7 +584,7 @@ export const useCampaignStore = create<CampaignState>((set, get) => ({
       if (campaign.dm_user_id === user.id) return true
 
       // Check if user is a member
-      const isMember = campaign.members?.some((member: any) => member.user_id === user.id)
+      const isMember = campaign.members?.some((member: { user_id: string }) => member.user_id === user.id)
       return isMember || false
     } catch (error) {
       return false

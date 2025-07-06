@@ -1,12 +1,9 @@
 import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
 import { Tooltip } from '@/components/ui/tooltip'
-import { ArrowLeft, Users, UserPlus, Trash2, Edit } from 'lucide-react'
+import { ArrowLeft, Users, UserPlus, Trash2 } from 'lucide-react'
 import { useCampaignStore } from '@/stores/campaign'
 import { InviteDialog } from './InviteDialog'
 import { getDisplayStatus, CAMPAIGN_STATUS_OPTIONS } from '@/constants/campaignStatus'
@@ -24,7 +21,6 @@ interface CampaignManagementProps {
 export const CampaignManagement: React.FC<CampaignManagementProps> = ({ onBack }) => {
   const { currentCampaign, updateCampaign, userRole, deactivateCampaign, removeMember, getAllMembersWithDM } = useCampaignStore()
   const [inviteDialogOpen, setInviteDialogOpen] = React.useState(false)
-  const [saving, setSaving] = React.useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false)
   const [deleting, setDeleting] = React.useState(false)
   const [removingMemberId, setRemovingMemberId] = React.useState<string | null>(null)
@@ -40,7 +36,6 @@ export const CampaignManagement: React.FC<CampaignManagementProps> = ({ onBack }
       if (!currentCampaign) return
       
       preventingNavigationRef.current = true
-      setSaving(true)
       
       try {
         await updateCampaign(currentCampaign.id, { [field]: value })
@@ -48,7 +43,6 @@ export const CampaignManagement: React.FC<CampaignManagementProps> = ({ onBack }
         console.error('Failed to update campaign:', error)
         alert('Failed to update campaign')
       } finally {
-        setSaving(false)
         setTimeout(() => {
           preventingNavigationRef.current = false
         }, 200)
@@ -58,17 +52,17 @@ export const CampaignManagement: React.FC<CampaignManagementProps> = ({ onBack }
 
   // Override the original onBack to intercept it
   React.useEffect(() => {
-    const originalHandleBackToHome = (window as any).handleBackToHome
+    const originalHandleBackToHome = (window as Record<string, unknown>).handleBackToHome as ((...args: unknown[]) => unknown) | undefined
     if (originalHandleBackToHome) {
-      (window as any).handleBackToHome = (...args: any[]) => {
+      (window as Record<string, unknown>).handleBackToHome = (...args: unknown[]) => {
         if (inlineEdit.editingField || preventingNavigationRef.current) {
           return
         }
-        return originalHandleBackToHome.apply(this, args)
+        return originalHandleBackToHome(...args)
       }
       
       return () => {
-        (window as any).handleBackToHome = originalHandleBackToHome
+        (window as Record<string, unknown>).handleBackToHome = originalHandleBackToHome
       }
     }
   }, [inlineEdit.editingField])

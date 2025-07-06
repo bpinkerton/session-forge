@@ -124,8 +124,9 @@ npx tsc --noEmit     # Type checking
 ```bash
 CODECOV_TOKEN=xxx        # For enhanced coverage reporting
 SLACK_WEBHOOK_URL=xxx    # For deployment notifications
-VERCEL_TOKEN=xxx         # For Vercel deployments
 NETLIFY_AUTH_TOKEN=xxx   # For Netlify deployments
+AWS_ACCESS_KEY_ID=xxx    # For AWS S3 deployments
+AWS_SECRET_ACCESS_KEY=xxx # For AWS S3 deployments
 ```
 
 ### Environment Variables

@@ -105,7 +105,7 @@ jobs:
         echo "🚀 Deploying to staging environment..."
         echo "This would deploy to your staging environment"
         # Add your staging deployment commands here
-        # Example: Deploy to Vercel, Netlify, or your hosting provider
+        # Example: Deploy to your hosting provider
         
   deploy-production:
     name: Deploy to Production
@@ -129,7 +129,7 @@ jobs:
         echo "🚀 Deploying to production environment..."
         echo "This would deploy to your production environment"
         # Add your production deployment commands here
-        # Example: Deploy to Vercel, Netlify, or your hosting provider
+        # Example: Deploy to your hosting provider
 
   security-scan:
     name: Security Scan

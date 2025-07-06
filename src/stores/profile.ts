@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { supabase, uploadProfilePicture, deleteProfilePicture, validateImageFile } from '@/lib/supabase'
 import { requestCache } from '@/utils/requestCache'
-import { getCurrentUser, requireAuth } from '@/utils/getCurrentUser'
+import { requireAuth } from '@/utils/getCurrentUser'
 import type { UserProfile, UserProfileWithAccounts, TTRPGSystem, PlayStyle } from '@/types'
 
 interface ProfileState {
@@ -19,7 +19,7 @@ interface ProfileState {
   fetchProfile: () => Promise<void>
   fetchLookupTables: () => Promise<void>
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>
-  updateProfileField: (field: keyof UserProfile, value: any) => void
+  updateProfileField: (field: keyof UserProfile, value: unknown) => void
   updateTTRPGSystems: (systemIds: string[]) => Promise<void>
   updatePlayStyles: (styleIds: string[]) => Promise<void>
   uploadProfilePicture: (file: File) => Promise<void>
@@ -97,7 +97,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       
       const profileData = await requestCache.get(cacheKey, async () => {
         // First check if profile exists, create if needed
-        const { data: existingProfile, error: checkError } = await supabase
+        const { error: checkError } = await supabase
           .from('user_profiles')
           .select('user_id')
           .eq('user_id', user.id)
@@ -237,7 +237,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     }
   },
 
-  updateProfileField: (field: keyof UserProfile, value: any) => {
+  updateProfileField: (field: keyof UserProfile, value: unknown) => {
     const { profile } = get()
     if (!profile) return
 
@@ -602,7 +602,6 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
           .single()
 
         if (!existingAccount) {
-          
           // Extract data from identity
           const identityData = identity.identity_data || {}
           
@@ -621,9 +620,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
           if (error) {
             console.error('Error creating connected account:', error)
-          } else {
           }
-        } else {
         }
       }
 
@@ -658,7 +655,6 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
         .single()
 
       if (!existingAccount) {
-        
         // Extract data from identity
         const identityData = oauthIdentity.identity_data || {}
         
@@ -677,9 +673,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
         if (error) {
           console.error('Error creating connected account:', error)
-        } else {
         }
-      } else {
       }
 
       // Refresh profile to show new connected account

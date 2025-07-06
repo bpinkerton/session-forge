@@ -1,7 +1,7 @@
 import React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { AlertTriangle, Trash2, X } from 'lucide-react'
+import { AlertTriangle, Trash2 } from 'lucide-react'
 
 interface ConfirmationDialogProps {
   open: boolean

@@ -44,10 +44,10 @@ const AuthForm = () => {
     }
   }, [])
 
-  const getErrorMessage = (error: any): string => {
-    if (!error?.message) return 'An unexpected error occurred'
+  const getErrorMessage = (error: unknown): string => {
+    if (!error || typeof error !== 'object' || !('message' in error)) return 'An unexpected error occurred'
     
-    const message = error.message.toLowerCase()
+    const message = (error.message as string).toLowerCase()
     
     // Common Supabase auth error messages
     if (message.includes('invalid login credentials') || message.includes('invalid email or password')) {
@@ -76,7 +76,7 @@ const AuthForm = () => {
     }
     
     // Return the original message if we don't have a specific handler
-    return error.message
+    return error.message as string
   }
 
   const validateForm = (): string | null => {
@@ -707,7 +707,7 @@ const Dashboard = () => {
     try {
       await fetchCampaignFull(campaign.id)
       setCurrentView('home')
-    } catch (error) {
+    } catch {
       // Silently refresh campaign list to remove inaccessible campaigns
       await fetchUserCampaigns()
     }
@@ -717,7 +717,7 @@ const Dashboard = () => {
     try {
       await fetchCampaignFull(campaign.id)
       setCurrentView('campaign-management')
-    } catch (error) {
+    } catch {
       // Silently refresh campaign list to remove inaccessible campaigns
       await fetchUserCampaigns()
     }

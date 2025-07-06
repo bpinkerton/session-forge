@@ -2,7 +2,7 @@ import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { ArrowLeft, User, Calendar, Gamepad2, Link, Camera, CheckCircle2, Upload, Trash2, ExternalLink, Unlink } from 'lucide-react'
+import { ArrowLeft, User, Calendar, Gamepad2, Link, Camera, CheckCircle2, Upload, Trash2, ExternalLink, Unlink, Loader2 } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth'
 import { useProfileStore } from '@/stores/profile'
 import { InlineEditField } from '@/components/ui/inline-edit-field'
@@ -32,7 +32,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
     updatePlayStyles,
     uploadProfilePicture,
     deleteProfilePicture,
-    useOAuthAvatar,
     disconnectAccount,
     manuallyLinkOAuthAccount,
     linkSpecificOAuthAccount,
@@ -49,7 +48,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
     }
     return 'general'
   })
-  const [pendingChanges, setPendingChanges] = React.useState<Partial<any>>({})
+  const [pendingChanges, setPendingChanges] = React.useState<Partial<Record<string, unknown>>>({})
   const [pendingSystemIds, setPendingSystemIds] = React.useState<string[]>([])
   const [pendingStyleIds, setPendingStyleIds] = React.useState<string[]>([])
   const [showOAuthOptions, setShowOAuthOptions] = React.useState(false)
@@ -64,7 +63,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
   const inlineEdit = useInlineEdit({
     onSave: (field: string, value: string) => {
       if (field === 'about_me' || field === 'display_name') {
-        updateProfileField(field as any, value)
+        updateProfileField(field as 'about_me' | 'display_name', value)
         
         const updates = { [field]: value }
         debouncedSave(updates)
@@ -106,7 +105,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
   }, [activeTab, hasDisconnected, linkSpecificOAuthAccount, manuallyLinkOAuthAccount])
 
   // Auto-save logic
-  const debouncedSave = React.useCallback((updates: Partial<any>) => {
+  const debouncedSave = React.useCallback((updates: Partial<Record<string, unknown>>) => {
     // Clear existing timeout
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current)
@@ -121,13 +120,11 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
 
   const weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
   
-  // Get the IDs of selected systems and styles
-  const selectedSystemIds = profile?.ttrpg_systems?.map(s => s.system_id) || []
-  const selectedStyleIds = profile?.play_styles?.map(s => s.style_id) || []
+  // Get the IDs of selected systems and styles (computed values, not used directly)
 
   // Handle field updates with auto-save
-  const handleFieldUpdate = React.useCallback((field: string, value: any) => {
-    updateProfileField(field as any, value)
+  const handleFieldUpdate = React.useCallback((field: string, value: unknown) => {
+    updateProfileField(field as 'about_me' | 'display_name', value)
     
     const updates = { ...pendingChanges, [field]: value }
     setPendingChanges(updates)
@@ -228,7 +225,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
   }
 
   const handleOAuthAvatarSelect = (provider: 'google' | 'discord' | 'twitch') => {
-    useOAuthAvatar(provider)
+    // Call the store function directly, not the hook
+    const profileStore = useProfileStore.getState()
+    profileStore.useOAuthAvatar(provider)
     setShowOAuthOptions(false)
   }
 
@@ -420,13 +419,13 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
                     {showOAuthOptions && (
                       <div className="space-y-2 p-2 bg-black/20 rounded-lg border border-purple-500/20">
                         {['google', 'discord', 'twitch'].map(provider => {
-                          const avatarUrl = getConnectedAccountAvatar(provider as any)
+                          const avatarUrl = getConnectedAccountAvatar(provider as 'google' | 'discord' | 'twitch')
                           if (!avatarUrl) return null
                           
                           return (
                             <button
                               key={provider}
-                              onClick={() => handleOAuthAvatarSelect(provider as any)}
+                              onClick={() => handleOAuthAvatarSelect(provider as 'google' | 'discord' | 'twitch')}
                               className="flex items-center space-x-2 w-full p-2 hover:bg-purple-600/20 rounded text-left"
                             >
                               <img 
@@ -459,7 +458,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
           </div>
         )
 
-      case 'accounts':
+      case 'accounts': {
         const getProviderInfo = (provider: 'google' | 'discord' | 'twitch') => {
           const providers = {
             google: { name: 'Google', color: 'bg-white', signIn: signInWithGoogle },
@@ -621,8 +620,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
             </CardContent>
           </Card>
         )
+      }
 
-      case 'preferences':
+      case 'preferences': {
         return (
           <Card className="bg-app-card">
             <CardHeader>
@@ -691,8 +691,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
             </CardContent>
           </Card>
         )
+      }
 
-      case 'systems':
+      case 'systems': {
         return (
           <Card className="bg-app-card">
             <CardHeader>
@@ -736,6 +737,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
             </CardContent>
           </Card>
         )
+      }
 
       default:
         return null
@@ -778,7 +780,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
         ].map(({ id, label, icon: Icon }) => (
           <button
             key={id}
-            onClick={() => setActiveTab(id as any)}
+            onClick={() => setActiveTab(id as 'general' | 'accounts' | 'preferences' | 'systems')}
             className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               activeTab === id
                 ? 'bg-purple-600 text-white'

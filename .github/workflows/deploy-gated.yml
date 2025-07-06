@@ -265,9 +265,9 @@ jobs:
         
         # Add your actual staging deployment commands here
         # Examples:
-        # - Deploy to Vercel: vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
         # - Deploy to Netlify: netlify deploy --prod --dir=dist
         # - Deploy to S3: aws s3 sync dist/ s3://your-bucket/
+        # - Deploy to your custom hosting provider
         
         echo "🎉 Staging deployment completed successfully"
         
@@ -307,9 +307,9 @@ jobs:
         
         # Add your actual production deployment commands here
         # Examples:
-        # - Deploy to Vercel: vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
         # - Deploy to Netlify: netlify deploy --prod --dir=dist
         # - Deploy to S3: aws s3 sync dist/ s3://your-production-bucket/
+        # - Deploy to your custom hosting provider
         
         echo "🎉 Production deployment completed successfully"
         
