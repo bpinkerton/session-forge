@@ -576,8 +576,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
                                 className="text-purple-400 hover:text-purple-300 w-full sm:w-auto"
                               >
                                 <ExternalLink className="h-3 w-3 mr-1" />
-                                <span className="hidden sm:inline">Use Avatar</span>
-                                <span className="sm:hidden">Use</span>
+                                Use Avatar
                               </Button>
                             )}
                             <Button 
@@ -588,8 +587,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
                               className="text-red-400 hover:text-red-300 w-full sm:w-auto"
                             >
                               <Unlink className="h-3 w-3 mr-1" />
-                              <span className="hidden sm:inline">Disconnect</span>
-                              <span className="sm:hidden">Remove</span>
+                              Disconnect
                             </Button>
                           </>
                         ) : (
