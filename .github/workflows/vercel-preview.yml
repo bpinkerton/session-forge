@@ -49,7 +49,8 @@ jobs:
       id: branch-info
       run: |
         # Install Supabase CLI if needed
-        npm install -g supabase
+        go install github.com/supabase/cli@latest
+        echo "$HOME/go/bin" >> $GITHUB_PATH
         
         # Authenticate Supabase CLI
         echo "🔑 Authenticating with Supabase CLI..."
