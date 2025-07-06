@@ -70,7 +70,7 @@ export const SessionDetail: React.FC<SessionDetailProps> = ({ sessionId, onEdit,
   }
 
 
-  const getCurrentVote = (poll: SessionPoll & { votes: any[] }) => {
+  const getCurrentVote = (poll: SessionPoll & { votes: { user_id: string; availability: string }[] }) => {
     return poll.votes?.find(vote => vote.user_id === user?.id)?.availability
   }
 
@@ -201,7 +201,7 @@ export const SessionDetail: React.FC<SessionDetailProps> = ({ sessionId, onEdit,
 
                   <div className="flex gap-2">
                     {(['available', 'maybe', 'unavailable'] as const).map((availability) => {
-                      const isSelected = getCurrentVote(poll as any) === availability
+                      const isSelected = getCurrentVote(poll as SessionPoll & { votes: { user_id: string; availability: string }[] }) === availability
                       return (
                         <Button
                           key={availability}

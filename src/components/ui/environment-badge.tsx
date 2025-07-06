@@ -88,18 +88,3 @@ export const EnvironmentBadge: React.FC = () => {
     </div>
   )
 }
-
-// Hook to get current environment
-export const useEnvironment = () => {
-  const url = import.meta.env.VITE_SUPABASE_URL || ''
-  
-  if (url.includes('localhost') || url.includes('127.0.0.1')) {
-    return 'local'
-  } else if (url.includes('staging-branch-')) {
-    return 'staging'
-  } else if (url.includes('-branch-')) {
-    return 'preview'
-  } else {
-    return 'production'
-  }
-}

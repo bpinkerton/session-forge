@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 
 // Mock Supabase module
 vi.mock('@/lib/supabase', () => ({
@@ -15,9 +15,7 @@ vi.mock('@/lib/supabase', () => ({
 }))
 
 import { useAuthStore } from '@/stores/auth'
-import { supabase } from '@/lib/supabase'
 
-const mockSupabaseClient = supabase as any
 
 describe('Auth Store', () => {
   it('should have initial state', () => {
@@ -41,7 +39,6 @@ describe('Auth Store', () => {
   })
 
   it('should handle state updates', () => {
-    const initialState = useAuthStore.getState()
     
     // Test that state can be updated
     useAuthStore.setState({ loading: true })
