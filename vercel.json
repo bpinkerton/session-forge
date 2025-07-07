@@ -1,9 +1,14 @@
 {
   "github": {
-    "enabled": false,
-    "silent": true
+    "enabled": true
   },
   "git": {
-    "deploymentEnabled": false
-  }
+    "deploymentEnabled": {
+      "main": true,
+      "develop": true
+    }
+  },
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist"
 }

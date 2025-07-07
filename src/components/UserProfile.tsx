@@ -1,5 +1,6 @@
 import React from 'react'
 import { Button } from '@/components/ui/button'
+import { ThemedButton } from '@/components/ui/themed-button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { ArrowLeft, User, Calendar, Gamepad2, Link, Camera, CheckCircle2, Upload, Trash2, ExternalLink, Unlink, Loader2 } from 'lucide-react'
@@ -381,27 +382,25 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
                     )}
                   </div>
                   <div className="flex flex-col space-y-2">
-                    <div className="flex space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                      <ThemedButton 
                         onClick={() => fileInputRef.current?.click()}
                         disabled={saving}
+                        className="w-full sm:w-auto"
                       >
                         <Upload className="h-4 w-4 mr-1" />
                         Upload Picture
-                      </Button>
+                      </ThemedButton>
                       {profile?.profile_picture_url && (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <ThemedButton 
+                          variant="destructive"
                           onClick={deleteProfilePicture}
                           disabled={saving}
-                          className="text-red-400 hover:text-red-300"
+                          className="w-full sm:w-auto"
                         >
                           <Trash2 className="h-4 w-4 mr-1" />
                           Remove
-                        </Button>
+                        </ThemedButton>
                       )}
                     </div>
                     
@@ -543,15 +542,15 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
                   const isConnected = !!connectedAccount
                   
                   return (
-                    <div key={provider} className="flex items-center justify-between p-3 bg-black/20 rounded-lg border border-purple-500/20">
-                      <div className="flex items-center space-x-3">
+                    <div key={provider} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-black/20 rounded-lg border border-purple-500/20 space-y-3 sm:space-y-0">
+                      <div className="flex items-center space-x-3 min-w-0 flex-1">
                         {renderProviderIcon(provider, isConnected, connectedAccount?.provider_avatar_url || undefined)}
-                        <div>
+                        <div className="min-w-0 flex-1">
                           <p className="text-white text-sm font-medium">{providerInfo.name}</p>
                           {isConnected ? (
-                            <div className="flex items-center space-x-2">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
                               {connectedAccount.provider_username && (
-                                <p className="text-purple-300 text-xs">{connectedAccount.provider_username}</p>
+                                <p className="text-purple-300 text-xs truncate">{connectedAccount.provider_username}</p>
                               )}
                               <span className="text-green-400 text-xs">Connected</span>
                               {profile?.profile_picture_url === connectedAccount.provider_avatar_url && (
@@ -564,46 +563,41 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
                         </div>
                       </div>
                       
-                      <div className="flex space-x-2">
+                      <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 flex-shrink-0">
                         {isConnected ? (
                           <>
                             {connectedAccount?.provider_avatar_url && (
-                              <Button 
-                                variant="outline" 
-                                size="sm"
+                              <ThemedButton 
                                 onClick={() => handleOAuthAvatarSelect(provider)}
                                 disabled={saving}
-                                className="text-purple-400 hover:text-purple-300"
+                                className="w-full sm:w-auto"
                               >
                                 <ExternalLink className="h-3 w-3 mr-1" />
                                 Use Avatar
-                              </Button>
+                              </ThemedButton>
                             )}
-                            <Button 
-                              variant="outline" 
-                              size="sm"
+                            <ThemedButton 
+                              variant="destructive"
                               onClick={() => handleDisconnectClick(provider)}
                               disabled={saving}
-                              className="text-red-400 hover:text-red-300"
+                              className="w-full sm:w-auto"
                             >
                               <Unlink className="h-3 w-3 mr-1" />
                               Disconnect
-                            </Button>
+                            </ThemedButton>
                           </>
                         ) : (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
+                          <ThemedButton 
                             onClick={() => {
                               setHasDisconnected(false) // Reset flag when manually connecting
                               providerInfo.signIn()
                             }}
                             disabled={saving}
-                            className="text-purple-400 hover:text-purple-300"
+                            className="w-full sm:w-auto"
                           >
                             <Link className="h-3 w-3 mr-1" />
                             Connect
-                          </Button>
+                          </ThemedButton>
                         )}
                       </div>
                     </div>
@@ -706,33 +700,41 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {ttrpgSystems.map((system) => (
                   <button
                     key={system.id}
                     onClick={() => handleSystemToggle(system.id)}
-                    className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
+                    className={`px-3 py-3 rounded text-sm font-medium transition-colors min-h-[44px] text-left ${
                       pendingSystemIds.includes(system.id)
                         ? 'bg-purple-600 text-white'
                         : 'bg-black/20 border border-purple-500/30 text-purple-200 hover:bg-purple-600/20'
                     }`}
+                    title={system.name}
                   >
-                    {system.name}
+                    <span className="truncate block">{system.name}</span>
                   </button>
                 ))}
               </div>
               
               <div className="mt-6 p-4 bg-purple-600/10 rounded-lg border border-purple-500/20">
                 <h4 className="text-sm font-medium text-purple-200 mb-2">Selected Systems:</h4>
-                <p className="text-purple-300 text-sm">
-                  {pendingSystemIds.length > 0 
-                    ? ttrpgSystems
+                <div className="text-purple-300 text-sm">
+                  {pendingSystemIds.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {ttrpgSystems
                         .filter(s => pendingSystemIds.includes(s.id))
-                        .map(s => s.name)
-                        .join(', ')
-                    : 'No systems selected yet'
-                  }
-                </p>
+                        .map(s => (
+                          <span key={s.id} className="px-2 py-1 bg-purple-600/20 rounded text-xs">
+                            {s.name}
+                          </span>
+                        ))
+                      }
+                    </div>
+                  ) : (
+                    <p>No systems selected yet</p>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -773,22 +775,24 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
       {/* Tab Navigation */}
       <div className="flex space-x-1 bg-black/20 backdrop-blur-sm border border-purple-500/20 rounded-lg p-1">
         {[
-          { id: 'general', label: 'General', icon: User },
-          { id: 'accounts', label: 'Accounts', icon: Link },
-          { id: 'preferences', label: 'Preferences', icon: Calendar },
-          { id: 'systems', label: 'TTRPG Systems', icon: Gamepad2 }
-        ].map(({ id, label, icon: Icon }) => (
+          { id: 'general', label: 'General', shortLabel: 'General', icon: User },
+          { id: 'accounts', label: 'Accounts', shortLabel: 'Accounts', icon: Link },
+          { id: 'preferences', label: 'Preferences', shortLabel: 'Prefs', icon: Calendar },
+          { id: 'systems', label: 'TTRPG Systems', shortLabel: 'TTRPG', icon: Gamepad2 }
+        ].map(({ id, label, shortLabel, icon: Icon }) => (
           <button
             key={id}
             onClick={() => setActiveTab(id as 'general' | 'accounts' | 'preferences' | 'systems')}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`flex items-center justify-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors flex-1 min-w-0 ${
               activeTab === id
                 ? 'bg-purple-600 text-white'
                 : 'text-purple-300 hover:text-purple-100 hover:bg-purple-600/20'
             }`}
+            title={label}
           >
-            <Icon className="h-4 w-4" />
-            <span>{label}</span>
+            <Icon className="h-4 w-4 flex-shrink-0" />
+            <span className="hidden sm:inline truncate">{label}</span>
+            <span className="sm:hidden truncate">{shortLabel}</span>
           </button>
         ))}
       </div>
