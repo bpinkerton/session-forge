@@ -172,14 +172,14 @@ export const CampaignSetup: React.FC<CampaignSetupProps> = ({ onCampaignSelected
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
-            <Sword className="h-12 w-12 text-purple-400 mr-4" />
-            <h1 className="text-4xl font-bold text-white">SessionForge</h1>
+            <Sword className="h-8 w-8 sm:h-12 sm:w-12 text-purple-400 mr-2 sm:mr-4" />
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">SessionForge</h1>
           </div>
-          <p className="text-purple-200 text-lg">Choose a campaign to manage or create a new one</p>
+          <p className="text-purple-200 text-base sm:text-lg">Choose a campaign to manage or create a new one</p>
         </div>
 
         {campaigns.length === 0 ? (
-          <div className="max-w-md mx-auto">
+          <div className="max-w-sm sm:max-w-md mx-auto">
             <Card className="bg-app-card">
               <CardContent className="p-8">
                 <EmptyState
@@ -208,19 +208,22 @@ export const CampaignSetup: React.FC<CampaignSetupProps> = ({ onCampaignSelected
           </div>
         ) : (
           <div className="max-w-4xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-white">Your Campaigns</h2>
-              <div className="flex space-x-2">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-white">Your Campaigns</h2>
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                 <Button 
                   variant="outline" 
                   onClick={() => setShowJoinForm(true)}
+                  className="w-full sm:w-auto"
                 >
                   <UserPlus className="h-4 w-4 mr-2" />
-                  Join Campaign
+                  <span className="hidden sm:inline">Join Campaign</span>
+                  <span className="sm:hidden">Join</span>
                 </Button>
-                <Button onClick={() => setShowCreateForm(true)}>
+                <Button onClick={() => setShowCreateForm(true)} className="w-full sm:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
-                  New Campaign
+                  <span className="hidden sm:inline">New Campaign</span>
+                  <span className="sm:hidden">New</span>
                 </Button>
               </div>
             </div>

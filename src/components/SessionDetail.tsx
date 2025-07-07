@@ -106,18 +106,18 @@ export const SessionDetail: React.FC<SessionDetailProps> = ({ sessionId, onEdit,
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-start">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+        <div className="min-w-0 flex-1">
           <Button variant="outline" onClick={onBack} className="mb-4">
             ← Back to Sessions
           </Button>
-          <h1 className="text-3xl font-bold text-white">{session.title}</h1>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">{session.title}</h1>
           <p className="text-purple-200 mt-2">{session.description || 'No description'}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-shrink-0">
           <Button onClick={() => onEdit(session)} variant="outline" size="sm">
-            <Edit className="h-4 w-4 mr-2" />
-            Edit
+            <Edit className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Edit</span>
           </Button>
         </div>
       </div>
@@ -199,7 +199,7 @@ export const SessionDetail: React.FC<SessionDetailProps> = ({ sessionId, onEdit,
                     )}
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     {(['available', 'maybe', 'unavailable'] as const).map((availability) => {
                       const isSelected = getCurrentVote(poll as SessionPoll & { votes: { user_id: string; availability: string }[] }) === availability
                       return (
@@ -208,12 +208,13 @@ export const SessionDetail: React.FC<SessionDetailProps> = ({ sessionId, onEdit,
                           variant={isSelected ? 'default' : 'outline'}
                           size="sm"
                           onClick={() => handleVote(poll.id, availability)}
-                          className="flex items-center gap-1"
+                          className="flex items-center justify-center gap-1 min-h-[44px] sm:min-h-0"
                         >
                           {availability === 'available' && <Check className="h-3 w-3" />}
                           {availability === 'maybe' && <Minus className="h-3 w-3" />}
                           {availability === 'unavailable' && <X className="h-3 w-3" />}
-                          {availability.charAt(0).toUpperCase() + availability.slice(1)}
+                          <span className="hidden sm:inline">{availability.charAt(0).toUpperCase() + availability.slice(1)}</span>
+                          <span className="sm:hidden">{availability === 'available' ? 'Yes' : availability === 'maybe' ? 'Maybe' : 'No'}</span>
                         </Button>
                       )
                     })}

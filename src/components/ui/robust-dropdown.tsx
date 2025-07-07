@@ -1,24 +1,55 @@
 import React from 'react'
 import { cn } from '@/lib/utils'
 
-interface DropdownProps {
+interface RobustDropdownProps {
   isOpen: boolean
-  onClose: () => void
+  onOpenChange: (open: boolean) => void
   trigger: React.ReactNode
   children: React.ReactNode
   className?: string
   align?: 'left' | 'right'
+  dataAttribute?: string
 }
 
-export const Dropdown: React.FC<DropdownProps> = ({
+export const RobustDropdown: React.FC<RobustDropdownProps> = ({
   isOpen,
-  onClose,
+  onOpenChange,
   trigger,
   children,
   className,
-  align = 'right'
+  align = 'right',
+  dataAttribute = 'robust-dropdown'
 }) => {
   const dropdownRef = React.useRef<HTMLDivElement>(null)
+  
+  // Handle click outside and escape key
+  React.useEffect(() => {
+    const handleClickOutside = (event: Event) => {
+      if (isOpen) {
+        const target = event.target as HTMLElement
+        // Check if click is outside the dropdown area (both button and content)
+        const dropdownButton = target.closest(`[data-${dataAttribute}]`)
+        const dropdownContent = target.closest('.robust-dropdown-content')
+        if (!dropdownButton && !dropdownContent) {
+          onOpenChange(false)
+        }
+      }
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        onOpenChange(false)
+      }
+    }
+
+    document.addEventListener('click', handleClickOutside, true)
+    document.addEventListener('keydown', handleEscape)
+    
+    return () => {
+      document.removeEventListener('click', handleClickOutside, true)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [isOpen, onOpenChange, dataAttribute])
   
   // Ensure dropdown doesn't overflow viewport
   React.useEffect(() => {
@@ -45,37 +76,24 @@ export const Dropdown: React.FC<DropdownProps> = ({
       {trigger}
       
       {isOpen && (
-        <>
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 z-40" 
-            onClick={(e) => {
-              e.stopPropagation()
-              onClose()
-            }}
-          />
-          
-          {/* Dropdown Content */}
-          <div 
-            ref={dropdownRef}
-            className={cn(
-              "absolute mt-2 min-w-40 sm:min-w-48 bg-black/40 backdrop-blur-md border border-purple-500/30 rounded-lg shadow-2xl z-50",
-              align === 'right' ? 'right-0' : 'left-0',
-              className
-            )}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="py-1">
-              {children}
-            </div>
+        <div 
+          ref={dropdownRef}
+          className={cn(
+            "robust-dropdown-content absolute mt-2 min-w-40 sm:min-w-48 bg-black/40 backdrop-blur-md border border-purple-500/30 rounded-lg shadow-2xl z-50",
+            align === 'right' ? 'right-0' : 'left-0',
+            className
+          )}
+        >
+          <div className="py-1">
+            {children}
           </div>
-        </>
+        </div>
       )}
     </div>
   )
 }
 
-interface DropdownItemProps {
+interface RobustDropdownItemProps {
   onClick?: () => void
   children: React.ReactNode
   className?: string
@@ -83,7 +101,7 @@ interface DropdownItemProps {
   disabled?: boolean
 }
 
-export const DropdownItem: React.FC<DropdownItemProps> = ({
+export const RobustDropdownItem: React.FC<RobustDropdownItemProps> = ({
   onClick,
   children,
   className,
@@ -108,6 +126,6 @@ export const DropdownItem: React.FC<DropdownItemProps> = ({
   )
 }
 
-export const DropdownSeparator: React.FC = () => {
+export const RobustDropdownSeparator: React.FC = () => {
   return <div className="border-t border-purple-500/20 my-1" />
 }
