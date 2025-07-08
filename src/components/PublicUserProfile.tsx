@@ -2,11 +2,11 @@ import React from 'react'
 import { useParams, Link, useLocation, useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { User, Clock, Globe, GamepadIcon, Users, ArrowLeft, ExternalLink, UserPlus, UserCheck, UserX } from 'lucide-react'
+import { User, Clock, GamepadIcon, Users, ArrowLeft, ExternalLink, UserPlus, UserCheck, UserX } from 'lucide-react'
 import { LoadingSpinner } from '@/components/ui/loading-spinner'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
-import type { UserProfileWithAccounts, TTRPGSystem, PlayStyle } from '@/types'
+import type { UserProfileWithAccounts } from '@/types'
 
 // Helper function to format days in short format
 const formatPreferredDays = (days: string[]): string => {
@@ -28,22 +28,6 @@ const formatPreferredDays = (days: string[]): string => {
   return sortedDays.map(day => dayMap[day.toLowerCase()] || day).join(' ')
 }
 
-// Helper function to format medium of play
-const formatMediumOfPlay = (mediums: string[]): string => {
-  const mediumMap: Record<string, string> = {
-    'in_person': 'In Person',
-    'online': 'Online',
-    'hybrid': 'Hybrid'
-  }
-  
-  // Define consistent ordering
-  const orderedMediums = ['in_person', 'online', 'hybrid']
-  const sortedMediums = mediums
-    .filter(medium => orderedMediums.includes(medium.toLowerCase()))
-    .sort((a, b) => orderedMediums.indexOf(a.toLowerCase()) - orderedMediums.indexOf(b.toLowerCase()))
-  
-  return sortedMediums.map(medium => mediumMap[medium] || medium).join(', ')
-}
 
 export const PublicUserProfile: React.FC = () => {
   const { friendCode } = useParams<{ friendCode: string }>()
@@ -57,8 +41,6 @@ export const PublicUserProfile: React.FC = () => {
   const [profile, setProfile] = React.useState<UserProfileWithAccounts | null>(null)
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
-  const [ttrpgSystems, setTtrpgSystems] = React.useState<TTRPGSystem[]>([])
-  const [playStyles, setPlayStyles] = React.useState<PlayStyle[]>([])
   const [friendshipStatus, setFriendshipStatus] = React.useState<{
     exists: boolean
     status: 'pending' | 'accepted'
@@ -219,7 +201,7 @@ export const PublicUserProfile: React.FC = () => {
         }
 
         // Fetch related data using the user_id from the profile
-        const [userSystemsResponse, userStylesResponse, systemsResponse, stylesResponse] = await Promise.all([
+        const [userSystemsResponse, userStylesResponse] = await Promise.all([
           // User's TTRPG systems
           supabase
             .from('user_ttrpg_systems')
@@ -235,15 +217,10 @@ export const PublicUserProfile: React.FC = () => {
               *,
               style:play_styles (*)
             `)
-            .eq('user_id', profileData.user_id),
-          // All TTRPG systems for display
-          supabase.from('ttrpg_systems').select('*').eq('is_active', true).order('sort_order'),
-          // All play styles for display
-          supabase.from('play_styles').select('*').order('sort_order')
+            .eq('user_id', profileData.user_id)
         ])
 
-        if (systemsResponse.data) setTtrpgSystems(systemsResponse.data)
-        if (stylesResponse.data) setPlayStyles(stylesResponse.data)
+        // System and style data not needed for public profile display
 
         // Combine all data into the profile object
         setProfile({
@@ -422,11 +399,11 @@ export const PublicUserProfile: React.FC = () => {
                         <Clock className="h-4 w-4" />
                         <span>
                           {Math.floor(profile.preferred_session_length / 60)}h sessions
-                          {profile.scheduling_preferences?.preferred_days?.length > 0 && (
+                          {profile.scheduling_preferences?.preferred_days?.length && profile.scheduling_preferences.preferred_days.length > 0 && (
                             <> • {formatPreferredDays(profile.scheduling_preferences.preferred_days)}</>
                           )}
-                          {profile.scheduling_preferences?.medium_of_play?.length > 0 && (
-                            <> • {formatMediumOfPlay(profile.scheduling_preferences.medium_of_play)}</>
+                          {profile.scheduling_preferences?.medium_of_play?.length && profile.scheduling_preferences.medium_of_play.length > 0 && (
+                            <> • {profile.scheduling_preferences.medium_of_play.join(', ')}</>
                           )}
                         </span>
                       </div>

@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { supabase, uploadProfilePicture, deleteProfilePicture, validateImageFile } from '@/lib/supabase'
 import { requestCache } from '@/utils/requestCache'
 import { requireAuth } from '@/utils/getCurrentUser'
-import type { UserProfile, UserProfileWithAccounts, TTRPGSystem, PlayStyle, FriendWithProfile, FriendsPage } from '@/types'
+import type { UserProfile, UserProfileWithAccounts, TTRPGSystem, PlayStyle, FriendsPage } from '@/types'
 
 interface ProfileState {
   profile: UserProfileWithAccounts | null
@@ -829,7 +829,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
       }
 
       // Check if friendship already exists
-      const { data: existingFriendship, error: checkError } = await supabase
+      const { data: existingFriendship } = await supabase
         .from('friendships')
         .select('id')
         .or(`and(requester_id.eq.${user.id},addressee_id.eq.${targetUser.user_id}),and(requester_id.eq.${targetUser.user_id},addressee_id.eq.${user.id})`)

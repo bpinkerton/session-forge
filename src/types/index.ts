@@ -177,6 +177,7 @@ export interface UserProfile {
       end_time: string // '23:00'
     } | null
     frequency: 'weekly' | 'biweekly' | 'monthly' | 'flexible' | null
+    medium_of_play: string[] // ['In Person', 'Online', 'Hybrid']
   } | null
   privacy_settings: {
     profile_visibility: 'public' | 'friends' | 'private'

@@ -50,22 +50,6 @@ const formatPreferredDays = (days: string[]): string => {
   return sortedDays.map(day => dayMap[day.toLowerCase()] || day).join(' ')
 }
 
-// Helper function to format medium of play
-const formatMediumOfPlay = (mediums: string[]): string => {
-  const mediumMap: Record<string, string> = {
-    'in_person': 'In Person',
-    'online': 'Online',
-    'hybrid': 'Hybrid'
-  }
-  
-  // Define consistent ordering
-  const orderedMediums = ['in_person', 'online', 'hybrid']
-  const sortedMediums = mediums
-    .filter(medium => orderedMediums.includes(medium.toLowerCase()))
-    .sort((a, b) => orderedMediums.indexOf(a.toLowerCase()) - orderedMediums.indexOf(b.toLowerCase()))
-  
-  return sortedMediums.map(medium => mediumMap[medium] || medium).join(', ')
-}
 
 export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
   const navigate = useNavigate()
@@ -78,7 +62,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
     friendsLoading,
     loading, 
     saving, 
-    lastSaved, 
+ 
     error,
     fetchProfile, 
     fetchLookupTables,
@@ -338,7 +322,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
     const newPreferences = {
       ...profile.scheduling_preferences,
       medium_of_play: currentMediums.includes(medium)
-        ? currentMediums.filter(m => m !== medium)
+        ? currentMediums.filter((m: string) => m !== medium)
         : [...currentMediums, medium]
     }
     handleFieldUpdate('scheduling_preferences', newPreferences)
@@ -430,8 +414,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
   }
 
   const handleRefreshFriends = () => {
-    const currentPage = friendsPage?.currentPage || 1
-    fetchFriends(currentPage, friendsSearch)
+    fetchFriends(currentFriendsPage, friendsSearch)
   }
 
   if (loading) {
@@ -810,7 +793,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
               <div>
                 <label className="block text-sm font-medium text-purple-300 mb-2">
                   Preferred Session Length (minutes)
-                  {profile.scheduling_preferences?.preferred_days?.length > 0 && (
+                  {profile.scheduling_preferences?.preferred_days?.length && profile.scheduling_preferences.preferred_days.length > 0 && (
                     <span className="ml-2 text-purple-400 font-normal">
                       ({formatPreferredDays(profile.scheduling_preferences.preferred_days)})
                     </span>
