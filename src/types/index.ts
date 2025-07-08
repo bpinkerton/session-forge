@@ -163,6 +163,7 @@ export interface UserProfile {
   display_name: string | null
   about_me: string | null
   profile_picture_url: string | null
+  friend_code: string
   timezone: string | null
   preferred_session_length: number | null // in minutes
   availability_notes: string | null
@@ -176,6 +177,7 @@ export interface UserProfile {
       end_time: string // '23:00'
     } | null
     frequency: 'weekly' | 'biweekly' | 'monthly' | 'flexible' | null
+    medium_of_play: string[] // ['In Person', 'Online', 'Hybrid']
   } | null
   privacy_settings: {
     profile_visibility: 'public' | 'friends' | 'private'
@@ -237,6 +239,39 @@ export interface UserProfileWithAccounts extends UserProfile {
   connected_accounts: ConnectedAccount[]
   ttrpg_systems: UserTTRPGSystem[]
   play_styles: UserPlayStyle[]
+}
+
+// Friends system types
+export type FriendshipStatus = 'pending' | 'accepted' | 'declined' | 'blocked'
+
+export interface Friendship {
+  id: string
+  requester_id: string
+  addressee_id: string
+  status: FriendshipStatus
+  created_at: string
+  updated_at: string
+}
+
+export interface FriendWithProfile {
+  friendship_id: string
+  friend_user_id: string
+  friend_code: string
+  display_name: string
+  profile_picture_url: string | null
+  status: FriendshipStatus
+  created_at: string
+  is_requester: boolean
+  total_count?: number // For pagination
+}
+
+export interface FriendsPage {
+  friends: FriendWithProfile[]
+  totalCount: number
+  currentPage: number
+  totalPages: number
+  hasNextPage: boolean
+  hasPreviousPage: boolean
 }
 
 // Campaign Statistics for Profile
