@@ -28,6 +28,23 @@ const formatPreferredDays = (days: string[]): string => {
   return sortedDays.map(day => dayMap[day.toLowerCase()] || day).join(' ')
 }
 
+// Helper function to format medium of play
+const formatMediumOfPlay = (mediums: string[]): string => {
+  const mediumMap: Record<string, string> = {
+    'in_person': 'In Person',
+    'online': 'Online',
+    'hybrid': 'Hybrid'
+  }
+  
+  // Define consistent ordering
+  const orderedMediums = ['in_person', 'online', 'hybrid']
+  const sortedMediums = mediums
+    .filter(medium => orderedMediums.includes(medium.toLowerCase()))
+    .sort((a, b) => orderedMediums.indexOf(a.toLowerCase()) - orderedMediums.indexOf(b.toLowerCase()))
+  
+  return sortedMediums.map(medium => mediumMap[medium.toLowerCase()] || medium).join(', ')
+}
+
 
 export const PublicUserProfile: React.FC = () => {
   const { friendCode } = useParams<{ friendCode: string }>()
@@ -403,7 +420,7 @@ export const PublicUserProfile: React.FC = () => {
                             <> • {formatPreferredDays(profile.scheduling_preferences.preferred_days)}</>
                           )}
                           {profile.scheduling_preferences?.medium_of_play?.length && profile.scheduling_preferences.medium_of_play.length > 0 && (
-                            <> • {profile.scheduling_preferences.medium_of_play.join(', ')}</>
+                            <> • {formatMediumOfPlay(profile.scheduling_preferences.medium_of_play)}</>
                           )}
                         </span>
                       </div>
