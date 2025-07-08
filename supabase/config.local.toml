@@ -1,0 +1,29 @@
+# Local OAuth Configuration Override
+# This file extends config.toml with local OAuth settings
+
+[auth]
+# Update the site URL for local development
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173", "http://127.0.0.1:5173"]
+
+# Google OAuth
+[auth.external.google]
+enabled = true
+client_id = "env(GOOGLE_CLIENT_ID)"
+secret = "env(GOOGLE_CLIENT_SECRET)"
+redirect_uri = "http://localhost:54321/auth/v1/callback"
+skip_nonce_check = true
+
+# Discord OAuth
+[auth.external.discord]
+enabled = true
+client_id = "env(DISCORD_CLIENT_ID)"
+secret = "env(DISCORD_CLIENT_SECRET)"
+redirect_uri = "http://localhost:54321/auth/v1/callback"
+
+# Twitch OAuth
+[auth.external.twitch]
+enabled = true
+client_id = "env(TWITCH_CLIENT_ID)"
+secret = "env(TWITCH_CLIENT_SECRET)"
+redirect_uri = "http://localhost:54321/auth/v1/callback"

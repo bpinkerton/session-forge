@@ -642,11 +642,12 @@ const Dashboard = () => {
     }
   }, [user])
 
-  // Handle OAuth return navigation
+  // Handle OAuth return navigation and profile view parameter
   React.useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const oauthReturn = urlParams.get('oauth_return')
     const provider = urlParams.get('provider')
+    const view = urlParams.get('view')
     
     if (oauthReturn === 'accounts' && user) {
       setCurrentView('profile')
@@ -657,6 +658,12 @@ const Dashboard = () => {
       if (provider) {
         sessionStorage.setItem('oauth_provider', provider)
       }
+      // Clean up URL parameter
+      window.history.replaceState({}, '', window.location.pathname)
+    } else if (view === 'profile' && user) {
+      setCurrentView('profile')
+      // Store the tab preference to return to Social tab
+      sessionStorage.setItem('profileActiveTab', 'social')
       // Clean up URL parameter
       window.history.replaceState({}, '', window.location.pathname)
     }

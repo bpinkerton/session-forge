@@ -2,12 +2,14 @@ import { create } from 'zustand'
 import { supabase, uploadProfilePicture, deleteProfilePicture, validateImageFile } from '@/lib/supabase'
 import { requestCache } from '@/utils/requestCache'
 import { requireAuth } from '@/utils/getCurrentUser'
-import type { UserProfile, UserProfileWithAccounts, TTRPGSystem, PlayStyle } from '@/types'
+import type { UserProfile, UserProfileWithAccounts, TTRPGSystem, PlayStyle, FriendWithProfile, FriendsPage } from '@/types'
 
 interface ProfileState {
   profile: UserProfileWithAccounts | null
   ttrpgSystems: TTRPGSystem[]
   playStyles: PlayStyle[]
+  friendsPage: FriendsPage | null
+  friendsLoading: boolean
   loading: boolean
   saving: boolean
   error: string | null
@@ -28,15 +30,26 @@ interface ProfileState {
   disconnectAccount: (provider: 'google' | 'discord' | 'twitch') => Promise<void>
   manuallyLinkOAuthAccount: () => Promise<void>
   linkSpecificOAuthAccount: (provider: 'google' | 'discord' | 'twitch') => Promise<void>
+  regenerateFriendCode: () => Promise<string | null>
+  copyFriendCodeUrl: () => void
   setSaving: (saving: boolean) => void
   setError: (error: string | null) => void
   _initAuthListener: () => void
+  
+  // Friends actions
+  fetchFriends: (page?: number, search?: string) => Promise<void>
+  sendFriendRequest: (friendCode: string) => Promise<void>
+  acceptFriendRequest: (friendshipId: string) => Promise<void>
+  declineFriendRequest: (friendshipId: string) => Promise<void>
+  removeFriend: (friendshipId: string) => Promise<void>
 }
 
 export const useProfileStore = create<ProfileState>((set, get) => ({
   profile: null,
   ttrpgSystems: [],
   playStyles: [],
+  friendsPage: null,
+  friendsLoading: false,
   loading: false,
   saving: false,
   error: null,
@@ -59,10 +72,10 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
             ['google', 'discord', 'twitch'].includes(identity.provider)
           )
           
+          await get().fetchProfile()
           if (hasOAuthIdentities) {
             await get().manuallyLinkOAuthAccount()
           }
-          await get().fetchProfile()
         }, 1500) // Single delay instead of multiple
       } else if (event === 'SIGNED_OUT') {
         // Clear all caches on sign out
@@ -104,9 +117,15 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
           .single()
         
         if (checkError && checkError.code === 'PGRST116') {
-          await supabase
-            .from('user_profiles')
-            .insert({ user_id: user.id })
+          // Create profile with friend code generation
+          const { error: insertError } = await supabase.rpc('create_user_profile_manual', {
+            p_user_id: user.id
+          })
+          
+          if (insertError) {
+            console.error('Error creating profile:', insertError)
+            // Fallback: let the auth trigger handle it on next request
+          }
         }
         
         // Fetch all profile data in parallel for efficiency
@@ -612,7 +631,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
               provider: identity.provider,
               provider_user_id: identity.id,
               provider_username: identityData.name || identityData.user_name || identityData.preferred_username || null,
-              provider_avatar_url: identityData.avatar_url || identityData.picture || null,
+              provider_avatar_url: identityData.picture || identityData.avatar_url || null, // Google uses 'picture'
               is_primary: false,
               connected_at: new Date().toISOString(),
               last_used_at: new Date().toISOString()
@@ -665,7 +684,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
             provider: targetProvider,
             provider_user_id: oauthIdentity.id,
             provider_username: identityData.name || identityData.user_name || identityData.preferred_username || null,
-            provider_avatar_url: identityData.avatar_url || identityData.picture || null,
+            provider_avatar_url: identityData.picture || identityData.avatar_url || null, // Google uses 'picture'
             is_primary: false,
             connected_at: new Date().toISOString(),
             last_used_at: new Date().toISOString()
@@ -681,6 +700,229 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     } catch (error) {
       console.error('Error linking specific OAuth account:', error)
       set({ error: 'Failed to link OAuth account' })
+    }
+  },
+
+  regenerateFriendCode: async () => {
+    const { profile } = get()
+    if (!profile) return null
+
+    set({ saving: true, error: null })
+
+    try {
+      const user = requireAuth()
+
+      // Call the database function to regenerate friend code
+      const { data, error } = await supabase.rpc('regenerate_user_friend_code', {
+        user_uuid: user.id
+      })
+
+      if (error) throw error
+
+      const newFriendCode = data as string
+
+      // Update local state
+      set({
+        profile: {
+          ...profile,
+          friend_code: newFriendCode,
+          updated_at: new Date().toISOString()
+        } as UserProfileWithAccounts,
+        saving: false
+      })
+
+      return newFriendCode
+    } catch (error) {
+      console.error('Error regenerating friend code:', error)
+      set({ error: 'Failed to regenerate friend code', saving: false })
+      return null
+    }
+  },
+
+  copyFriendCodeUrl: () => {
+    const { profile } = get()
+    if (!profile?.friend_code) return
+
+    const url = `${window.location.origin}/user/${profile.friend_code}`
+    
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(url).catch((err) => {
+        console.error('Failed to copy to clipboard:', err)
+        // Fallback for clipboard API failure
+        fallbackCopyToClipboard(url)
+      })
+    } else {
+      // Fallback for older browsers or non-secure contexts
+      fallbackCopyToClipboard(url)
+    }
+
+    function fallbackCopyToClipboard(text: string) {
+      const textArea = document.createElement('textarea')
+      textArea.value = text
+      textArea.style.position = 'fixed'
+      textArea.style.left = '-999999px'
+      textArea.style.top = '-999999px'
+      document.body.appendChild(textArea)
+      textArea.focus()
+      textArea.select()
+      
+      try {
+        document.execCommand('copy')
+      } catch (err) {
+        console.error('Fallback copy failed:', err)
+      }
+      
+      document.body.removeChild(textArea)
+    }
+  },
+
+  // Friends actions
+  fetchFriends: async (page = 1, search = '') => {
+    const user = requireAuth()
+    set({ friendsLoading: true, error: null })
+
+    try {
+      const pageSize = 10
+      const { data, error } = await supabase.rpc('get_user_friends_paginated', {
+        user_uuid: user.id,
+        search_query: search,
+        page_number: page,
+        page_size: pageSize
+      })
+
+      if (error) throw error
+
+      const friends = data || []
+      const totalCount = friends.length > 0 ? friends[0].total_count || 0 : 0
+      const totalPages = Math.ceil(totalCount / pageSize)
+
+      const friendsPage: FriendsPage = {
+        friends,
+        totalCount,
+        currentPage: page,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1
+      }
+
+      set({ friendsPage, friendsLoading: false })
+    } catch (error) {
+      console.error('Error fetching friends:', error)
+      set({ error: 'Failed to load friends', friendsLoading: false })
+    }
+  },
+
+  sendFriendRequest: async (friendCode: string) => {
+    const user = requireAuth()
+    set({ saving: true, error: null })
+
+    try {
+      // First, find the user by friend code
+      const { data: targetUser, error: userError } = await supabase
+        .from('user_profiles')
+        .select('user_id')
+        .eq('friend_code', friendCode.toUpperCase())
+        .single()
+
+      if (userError || !targetUser) {
+        throw new Error('User not found')
+      }
+
+      // Check if friendship already exists
+      const { data: existingFriendship, error: checkError } = await supabase
+        .from('friendships')
+        .select('id')
+        .or(`and(requester_id.eq.${user.id},addressee_id.eq.${targetUser.user_id}),and(requester_id.eq.${targetUser.user_id},addressee_id.eq.${user.id})`)
+        .single()
+
+      if (existingFriendship) {
+        throw new Error('Friendship request already exists')
+      }
+
+      // Create friendship request
+      const { error: insertError } = await supabase
+        .from('friendships')
+        .insert({
+          requester_id: user.id,
+          addressee_id: targetUser.user_id,
+          status: 'pending'
+        })
+
+      if (insertError) throw insertError
+
+      // Refresh current friends page
+      const currentPage = get().friendsPage?.currentPage || 1
+      await get().fetchFriends(currentPage)
+      set({ saving: false })
+    } catch (error) {
+      console.error('Error sending friend request:', error)
+      const message = error instanceof Error ? error.message : 'Failed to send friend request'
+      set({ error: message, saving: false })
+      throw error // Re-throw for UI handling
+    }
+  },
+
+  acceptFriendRequest: async (friendshipId: string) => {
+    set({ saving: true, error: null })
+
+    try {
+      const { error } = await supabase
+        .from('friendships')
+        .update({ status: 'accepted' })
+        .eq('id', friendshipId)
+
+      if (error) throw error
+
+      // Refresh current friends page
+      const currentPage = get().friendsPage?.currentPage || 1
+      await get().fetchFriends(currentPage)
+      set({ saving: false })
+    } catch (error) {
+      console.error('Error accepting friend request:', error)
+      set({ error: 'Failed to accept friend request', saving: false })
+    }
+  },
+
+  declineFriendRequest: async (friendshipId: string) => {
+    set({ saving: true, error: null })
+
+    try {
+      // Delete the friendship entirely when declining
+      const { error } = await supabase
+        .from('friendships')
+        .delete()
+        .eq('id', friendshipId)
+
+      if (error) throw error
+
+      // Refresh current friends page
+      const currentPage = get().friendsPage?.currentPage || 1
+      await get().fetchFriends(currentPage)
+      set({ saving: false })
+    } catch (error) {
+      console.error('Error declining friend request:', error)
+      set({ error: 'Failed to decline friend request', saving: false })
+    }
+  },
+
+  removeFriend: async (friendshipId: string) => {
+    set({ saving: true, error: null })
+
+    try {
+      const { error } = await supabase
+        .from('friendships')
+        .delete()
+        .eq('id', friendshipId)
+
+      if (error) throw error
+
+      // Refresh current friends page
+      const currentPage = get().friendsPage?.currentPage || 1
+      await get().fetchFriends(currentPage)
+      set({ saving: false })
+    } catch (error) {
+      console.error('Error removing friend:', error)
+      set({ error: 'Failed to remove friend', saving: false })
     }
   },
 
