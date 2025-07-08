@@ -30,6 +30,10 @@ dist-ssr
 .env.test.local
 .env.production.local
 
-# Database files (keep schema private)
+# Database files (keep schema private, but allow migrations)
 sql/
 *.sql
+
+# Allow Supabase migrations (these should be tracked)
+!supabase/migrations/*.sql
+!supabase/seed.sql
