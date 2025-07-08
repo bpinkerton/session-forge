@@ -54,22 +54,57 @@ export const RobustDropdown: React.FC<RobustDropdownProps> = ({
   // Ensure dropdown doesn't overflow viewport
   React.useEffect(() => {
     if (isOpen && dropdownRef.current) {
-      const rect = dropdownRef.current.getBoundingClientRect()
+      const dropdown = dropdownRef.current
+      const rect = dropdown.getBoundingClientRect()
+      const viewportWidth = window.innerWidth
+      const viewportHeight = window.innerHeight
+      const margin = 8 // Minimum margin from viewport edge
       
-      // Check if dropdown overflows viewport
-      if (rect.right > window.innerWidth) {
-        dropdownRef.current.style.right = '0px'
-        dropdownRef.current.style.left = 'auto'
+      // Reset styles first
+      dropdown.style.left = ''
+      dropdown.style.right = ''
+      dropdown.style.top = ''
+      dropdown.style.bottom = ''
+      dropdown.style.marginTop = ''
+      dropdown.style.marginBottom = ''
+      dropdown.style.transform = ''
+      
+      // Handle horizontal overflow
+      if (rect.right > viewportWidth - margin) {
+        if (align === 'right' || rect.left > viewportWidth / 2) {
+          // Align to right edge
+          dropdown.style.right = '0px'
+          dropdown.style.left = 'auto'
+        } else {
+          // Center or align to prevent overflow
+          const overflowAmount = rect.right - (viewportWidth - margin)
+          dropdown.style.transform = `translateX(-${overflowAmount}px)`
+        }
       }
       
-      if (rect.bottom > window.innerHeight) {
-        dropdownRef.current.style.bottom = '100%'
-        dropdownRef.current.style.top = 'auto'
-        dropdownRef.current.style.marginBottom = '8px'
-        dropdownRef.current.style.marginTop = '0'
+      if (rect.left < margin) {
+        dropdown.style.left = '0px'
+        dropdown.style.right = 'auto'
+        const underflowAmount = margin - rect.left
+        dropdown.style.transform = `translateX(${underflowAmount}px)`
+      }
+      
+      // Handle vertical overflow
+      if (rect.bottom > viewportHeight - margin) {
+        dropdown.style.bottom = '100%'
+        dropdown.style.top = 'auto'
+        dropdown.style.marginBottom = '8px'
+        dropdown.style.marginTop = '0'
+      }
+      
+      if (rect.top < margin) {
+        dropdown.style.top = '100%'
+        dropdown.style.bottom = 'auto'
+        dropdown.style.marginTop = '8px'
+        dropdown.style.marginBottom = '0'
       }
     }
-  }, [isOpen])
+  }, [isOpen, align])
   
   return (
     <div className="relative">
@@ -79,7 +114,7 @@ export const RobustDropdown: React.FC<RobustDropdownProps> = ({
         <div 
           ref={dropdownRef}
           className={cn(
-            "robust-dropdown-content absolute mt-2 min-w-40 sm:min-w-48 bg-black/40 backdrop-blur-md border border-purple-500/30 rounded-lg shadow-2xl z-50",
+            "robust-dropdown-content absolute mt-2 min-w-40 sm:min-w-48 bg-black/80 backdrop-blur-xl border border-purple-500/40 rounded-lg shadow-2xl ring-1 ring-white/10 z-50",
             align === 'right' ? 'right-0' : 'left-0',
             className
           )}

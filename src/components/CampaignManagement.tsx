@@ -205,7 +205,7 @@ export const CampaignManagement: React.FC<CampaignManagementProps> = ({ onBack }
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid sm:grid-cols-2 gap-6">
                 <InlineEditField
                   field="name"
                   label="Campaign Name"

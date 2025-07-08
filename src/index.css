@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Fix mobile scrolling issues */
+html {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  overscroll-behavior: none;
+  position: relative;
+}
+
+/* Prevent momentum scrolling bounce on iOS */
+#root {
+  overscroll-behavior: none;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
